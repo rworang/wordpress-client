@@ -1,3 +1,21 @@
+/**
+ * WordPress REST API client with typed responses and pagination support.
+ *
+ * Use this to fetch posts, categories, and media from any WordPress site.
+ *
+ * @example
+ * const client = new WordpressClient({ baseURL: 'https://myblog.com' })
+ *
+ * // Get the latest 5 posts
+ * const { data: posts, pagination } = await client.posts({ per_page: 5 })
+ *
+ * // Get a single post by slug
+ * const post = await client.post('hello-world')
+ *
+ * // Filter posts by category
+ * const { data: techPosts } = await client.posts({ categories: [3] })
+ */
+
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import type { RawPost, RawMedia, RawCategory } from './types/raw'
 import type { Post, Media, Category } from './types/domain'
