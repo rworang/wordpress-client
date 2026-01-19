@@ -1,0 +1,1 @@
+{"version":3,"file":"post.d.ts","sourceRoot":"","sources":["../../src/adapters/post.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,WAAW,CAAA;AAChD,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,cAAc,CAAA;AAC3C,OAAO,KAAK,EAAE,IAAI,EAAU,MAAM,iBAAiB,CAAA;AAOnD,eAAO,MAAM,MAAM,GAAU,KAAK,OAAO,EAAE,QAAQ,eAAe,KAAG,OAAO,CAAC,IAAI,CAuBhF,CAAA"}
