@@ -1,5 +1,6 @@
 /**
- * Transforms raw WordPress media responses into clean Media objects (internal).
+ * @internal
+ * Transforms raw WordPress media responses into clean Media objects.
  *
  * Flattens the nested media_details structure and converts responsive
  * image sizes into an easy-to-use sizes record.
@@ -9,6 +10,7 @@ import type { WordpressClient } from '../client'
 import type { RawMedia } from '../types/raw'
 import type { Media } from '../types/domain'
 
+/** @internal Converts a raw WordPress media item to a clean Media object. */
 export const toMedia = (raw: RawMedia): Media => ({
   id: raw.id,
   url: raw.guid.rendered,
@@ -30,6 +32,7 @@ export const toMedia = (raw: RawMedia): Media => ({
   ),
 })
 
+/** @internal Fetches full media details for a media ID. */
 export async function hydrateMedia(client: WordpressClient, id?: number): Promise<Media | null> {
   if (!id) return null
   try {
