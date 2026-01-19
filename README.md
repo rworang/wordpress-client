@@ -5,7 +5,7 @@ Typed WordPress REST API client for TypeScript/JavaScript projects.
 ## Installation
 
 ```bash
-npm install github:rworang/wordpress-client
+pnpm install github:rworang/wordpress-client
 ```
 
 Or add to `package.json`:
