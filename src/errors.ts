@@ -18,10 +18,18 @@
  * }
  */
 
+/**
+ * Base error for WordPress API failures.
+ *
+ * Use `instanceof` checks for specific error types, or catch this
+ * to handle all WordPress API errors.
+ */
 export class WordpressError extends Error {
   constructor(
     message: string,
+    /** HTTP status code from the API response */
     public readonly statusCode?: number,
+    /** WordPress error code (e.g., 'rest_post_invalid_id') */
     public readonly code?: string
   ) {
     super(message)
@@ -29,6 +37,18 @@ export class WordpressError extends Error {
   }
 }
 
+/**
+ * Thrown when a requested resource doesn't exist (404).
+ *
+ * @example
+ * try {
+ *   await client.postById(99999)
+ * } catch (err) {
+ *   if (err instanceof WordpressNotFoundError) {
+ *     // Handle missing post
+ *   }
+ * }
+ */
 export class WordpressNotFoundError extends WordpressError {
   constructor(resource: string, identifier: string | number) {
     super(`${resource} not found: ${identifier}`, 404, 'not_found')
@@ -36,6 +56,12 @@ export class WordpressNotFoundError extends WordpressError {
   }
 }
 
+/**
+ * Thrown when authentication fails or is required (401/403).
+ *
+ * This typically happens when accessing private posts or
+ * endpoints that require authentication.
+ */
 export class WordpressAuthError extends WordpressError {
   constructor(message = 'Authentication required') {
     super(message, 401, 'unauthorized')
@@ -43,9 +69,15 @@ export class WordpressAuthError extends WordpressError {
   }
 }
 
+/**
+ * Thrown when request parameters are invalid (400).
+ *
+ * The `details` property contains field-specific validation errors.
+ */
 export class WordpressValidationError extends WordpressError {
   constructor(
     message: string,
+    /** Map of field names to their validation error messages */
     public readonly details?: Record<string, string[]>
   ) {
     super(message, 400, 'validation_error')

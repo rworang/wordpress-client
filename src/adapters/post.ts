@@ -1,5 +1,6 @@
 /**
- * Transforms raw WordPress post responses into clean Post objects (internal).
+ * @internal
+ * Transforms raw WordPress post responses into clean Post objects.
  *
  * Extracts embedded author, categories, and featured media from the
  * nested _embedded structure. Automatically hydrates featured media
@@ -15,6 +16,7 @@ import { hydrateMedia } from './media'
 
 const EMPTY_AUTHOR: Author = { id: 0, name: '', url: '', description: '' }
 
+/** @internal Converts a raw WordPress post to a clean Post object. */
 export const toPost = async (raw: RawPost, client: WordpressClient): Promise<Post> => {
   const media = raw._embedded?.['wp:featuredmedia']?.[0]
   const cats = raw._embedded?.['wp:term']?.[0] ?? []
