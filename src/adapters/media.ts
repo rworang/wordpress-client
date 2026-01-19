@@ -1,3 +1,10 @@
+/**
+ * Transforms raw WordPress media responses into clean Media objects (internal).
+ *
+ * Flattens the nested media_details structure and converts responsive
+ * image sizes into an easy-to-use sizes record.
+ */
+
 import type { WordpressClient } from '../client'
 import type { RawMedia } from '../types/raw'
 import type { Media } from '../types/domain'

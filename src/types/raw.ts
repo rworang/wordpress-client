@@ -1,6 +1,10 @@
 /**
- * WP REST API base types
+ * Raw WordPress REST API response shapes (internal).
+ *
+ * These types match the WordPress REST API exactly. You typically won't
+ * use these directly—the client returns normalized domain types instead.
  */
+
 export interface RawMedia {
   id: number;
   guid: { rendered: string };
