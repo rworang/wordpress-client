@@ -1,3 +1,23 @@
+/**
+ * Error classes for WordPress API failures.
+ *
+ * - WordpressError: Base error for any API failure
+ * - WordpressNotFoundError: Thrown when a resource doesn't exist (404)
+ * - WordpressAuthError: Thrown when authentication fails (401/403)
+ * - WordpressValidationError: Thrown for invalid parameters (400)
+ *
+ * @example
+ * import { WordpressNotFoundError, WordpressAuthError } from '@worang/wordpress-client'
+ *
+ * try {
+ *   const post = await client.postById(99999)
+ * } catch (err) {
+ *   if (err instanceof WordpressNotFoundError) {
+ *     console.log('Post not found')
+ *   }
+ * }
+ */
+
 export class WordpressError extends Error {
   constructor(
     message: string,

@@ -1,3 +1,18 @@
+/**
+ * Pagination utilities for WordPress REST API responses.
+ *
+ * All list methods return a PaginatedResponse with both data and pagination info.
+ *
+ * @example
+ * const { data: posts, pagination } = await client.posts({ page: 2, per_page: 10 })
+ *
+ * console.log(pagination)
+ * // { total: 47, totalPages: 5, page: 2, perPage: 10 }
+ *
+ * // Check if there are more pages
+ * const hasMore = pagination.page < pagination.totalPages
+ */
+
 import type { AxiosResponse } from 'axios'
 
 export interface PaginatedResponse<T> {
