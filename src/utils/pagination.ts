@@ -15,16 +15,30 @@
 
 import type { AxiosResponse } from 'axios'
 
+/**
+ * Response wrapper containing data and pagination metadata.
+ *
+ * Returned by all list methods like `posts()`, `categories()`, and `mediaList()`.
+ */
 export interface PaginatedResponse<T> {
+  /** The requested items for the current page */
   data: T[]
   pagination: {
+    /** Total number of items across all pages */
     total: number
+    /** Total number of pages */
     totalPages: number
+    /** Current page number (1-indexed) */
     page: number
+    /** Items per page */
     perPage: number
   }
 }
 
+/**
+ * @internal
+ * Extracts pagination info from WordPress REST API response headers.
+ */
 export function extractPagination<T>(
   response: AxiosResponse<T[]>,
   page: number = 1,

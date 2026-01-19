@@ -1,4 +1,7 @@
-/** Re-exports adapter functions for transforming raw API responses. */
+/**
+ * @internal
+ * Re-exports adapter functions for transforming raw API responses.
+ */
 
 export { toPost } from './post'
 export { toMedia, hydrateMedia } from './media'

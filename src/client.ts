@@ -26,15 +26,43 @@ import { toCategory } from './adapters/category'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
 import { WordpressError, WordpressNotFoundError, WordpressAuthError } from './errors'
 
+/**
+ * Configuration options for the WordPress client.
+ *
+ * @example
+ * const client = new WordpressClient({
+ *   baseURL: 'https://myblog.com',
+ *   timeout: 5000,
+ * })
+ */
 export interface WordpressClientOptions {
+  /** Base URL of the WordPress site (required) */
   baseURL: string
+  /** REST API namespace - defaults to 'wp/v2' */
   namespace?: string
+  /** Request timeout in milliseconds - defaults to 10000 */
   timeout?: number
 }
 
+/**
+ * Typed client for fetching posts, categories, and media from WordPress.
+ *
+ * @example
+ * const client = new WordpressClient({ baseURL: 'https://myblog.com' })
+ * const { data: posts } = await client.posts({ per_page: 5 })
+ *
+ * @example
+ * // Get a single post by slug
+ * const post = await client.post('hello-world')
+ */
 export class WordpressClient {
   private readonly http: AxiosInstance
 
+  /**
+   * Creates a new WordPress client.
+   *
+   * @throws {Error} If baseURL is not provided
+   */
   constructor({
     baseURL,
     namespace = 'wp/v2',
@@ -57,6 +85,17 @@ export class WordpressClient {
 
   // ---- Posts ----
 
+  /**
+   * Fetch a paginated list of posts.
+   *
+   * @example
+   * // Get first page
+   * const { data: posts } = await client.posts()
+   *
+   * @example
+   * // Filter by category
+   * const { data: posts } = await client.posts({ categories: [5] })
+   */
   async posts(params: PostQueryParams = {}): Promise<PaginatedResponse<Post>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.http.get<RawPost[]>('/posts', {
@@ -67,6 +106,17 @@ export class WordpressClient {
     return { ...paginated, data: posts }
   }
 
+  /**
+   * Fetch a single post by its URL slug.
+   *
+   * @returns The post, or null if not found
+   *
+   * @example
+   * const post = await client.post('hello-world')
+   * if (post) {
+   *   console.log(post.title)
+   * }
+   */
   async post(slug: string): Promise<Post | null> {
     const response = await this.http.get<RawPost[]>('/posts', {
       params: { slug, _embed: true },
@@ -74,6 +124,11 @@ export class WordpressClient {
     return response.data.length ? await toPost(response.data[0], this) : null
   }
 
+  /**
+   * Fetch a single post by its numeric ID.
+   *
+   * @throws {WordpressNotFoundError} If the post doesn't exist
+   */
   async postById(id: number): Promise<Post> {
     const response = await this.http.get<RawPost>(`/posts/${id}`, {
       params: { _embed: true },
@@ -83,6 +138,12 @@ export class WordpressClient {
 
   // ---- Categories ----
 
+  /**
+   * Fetch a paginated list of categories.
+   *
+   * @example
+   * const { data: categories } = await client.categories({ hide_empty: true })
+   */
   async categories(params: TaxonomyQueryParams = {}): Promise<PaginatedResponse<Category>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.http.get<RawCategory[]>('/categories', {
@@ -92,6 +153,11 @@ export class WordpressClient {
     return { ...paginated, data: paginated.data.map(toCategory) }
   }
 
+  /**
+   * Fetch a single category by its URL slug.
+   *
+   * @returns The category, or null if not found
+   */
   async category(slug: string): Promise<Category | null> {
     const response = await this.http.get<RawCategory[]>('/categories', {
       params: { slug },
@@ -101,11 +167,22 @@ export class WordpressClient {
 
   // ---- Media ----
 
+  /**
+   * Fetch a single media item by its numeric ID.
+   *
+   * @throws {WordpressNotFoundError} If the media doesn't exist
+   */
   async media(id: number): Promise<Media> {
     const response = await this.http.get<RawMedia>(`/media/${id}`)
     return toMedia(response.data)
   }
 
+  /**
+   * Fetch a paginated list of media items.
+   *
+   * @example
+   * const { data: images } = await client.mediaList({ media_type: 'image' })
+   */
   async mediaList(params: MediaQueryParams = {}): Promise<PaginatedResponse<Media>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.http.get<RawMedia[]>('/media', {
