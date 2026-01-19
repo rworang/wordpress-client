@@ -1,3 +1,11 @@
+/**
+ * Transforms raw WordPress post responses into clean Post objects (internal).
+ *
+ * Extracts embedded author, categories, and featured media from the
+ * nested _embedded structure. Automatically hydrates featured media
+ * with full image size data.
+ */
+
 import type { WordpressClient } from '../client'
 import type { RawPost } from '../types/raw'
 import type { Post, Author } from '../types/domain'

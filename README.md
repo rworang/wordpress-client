@@ -55,13 +55,23 @@ const { data: categories } = await client.categories()
 
 ### Methods
 
-- `posts(params?)` - List posts with pagination
-- `post(slug)` - Get single post by slug
-- `postById(id)` - Get single post by ID
-- `categories(params?)` - List categories
-- `category(slug)` - Get single category by slug
-- `media(id)` - Get single media item
-- `mediaList(params?)` - List media items
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `posts(params?)` | `PaginatedResponse<Post>` | List posts with pagination |
+| `post(slug)` | `Post \| null` | Get single post by slug |
+| `postById(id)` | `Post` | Get single post by ID |
+| `categories(params?)` | `PaginatedResponse<Category>` | List categories |
+| `category(slug)` | `Category \| null` | Get single category by slug |
+| `media(id)` | `Media` | Get single media item |
+| `mediaList(params?)` | `PaginatedResponse<Media>` | List media items |
+
+## Documentation
+
+See [docs/README.md](./docs/README.md) for detailed documentation including:
+- Common usage patterns
+- Query parameter options
+- Understanding the response shapes
+- Error handling
 
 ## License
 

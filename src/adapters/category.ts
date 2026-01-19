@@ -1,3 +1,5 @@
+/** Transforms raw WordPress category responses into clean Category objects (internal). */
+
 import type { RawCategory } from '../types/raw'
 import type { Category } from '../types/domain'
 
