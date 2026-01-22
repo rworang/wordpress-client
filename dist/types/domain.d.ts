@@ -60,6 +60,8 @@ export interface Post {
     /** ISO 8601 publication date */
     date: string;
     categories: Category[];
+    /** Whether this post is pinned/sticky */
+    sticky: boolean;
 }
 /**
  * A WordPress media item (image, video, etc.) with responsive sizes.

@@ -43,6 +43,8 @@ export interface PostQueryParams {
     slug?: string | string[];
     /** Filter by post status (requires authentication for non-public statuses) */
     status?: 'publish' | 'draft' | 'pending' | 'private' | 'any';
+    /** Filter by sticky status - true for sticky posts only, false for non-sticky only */
+    sticky?: boolean;
 }
 /** Query parameters for fetching categories and tags. */
 export interface TaxonomyQueryParams {
