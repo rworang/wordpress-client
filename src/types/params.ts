@@ -46,6 +46,8 @@ export interface PostQueryParams {
   status?: 'publish' | 'draft' | 'pending' | 'private' | 'any'
   /** Filter by sticky status - true for sticky posts only, false for non-sticky only */
   sticky?: boolean
+  /** Exclude posts with these IDs */
+  exclude?: number[]
 }
 
 /** Query parameters for fetching categories and tags. */
