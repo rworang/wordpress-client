@@ -75,6 +75,7 @@ export interface RawPost {
         rendered: string;
     };
     date: string;
+    sticky: boolean;
     _embedded?: {
         'wp:featuredmedia'?: RawFeaturedMedia[];
         'wp:term'?: RawCategory[][];

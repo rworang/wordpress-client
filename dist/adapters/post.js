@@ -31,6 +31,7 @@ export const toPost = async (raw, client) => {
         featuredMedia: hydratedMedia || undefined,
         date: raw.date,
         categories: cats.map(toCategory),
+        sticky: raw.sticky ?? false,
     };
 };
 //# sourceMappingURL=post.js.map

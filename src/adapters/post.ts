@@ -39,5 +39,6 @@ export const toPost = async (raw: RawPost, client: WordpressClient): Promise<Pos
     featuredMedia: hydratedMedia || undefined,
     date: raw.date,
     categories: cats.map(toCategory),
+    sticky: raw.sticky ?? false,
   }
 }
