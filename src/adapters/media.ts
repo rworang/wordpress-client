@@ -7,7 +7,7 @@
  */
 
 import type { WordpressClient } from '../client'
-import type { RawMedia } from '../types/raw'
+import type { RawMedia, RawFeaturedMedia } from '../types/raw'
 import type { Media } from '../types/domain'
 
 /** @internal Converts a raw WordPress media item to a clean Media object. */
@@ -32,7 +32,36 @@ export const toMedia = (raw: RawMedia): Media => ({
   ),
 })
 
-/** @internal Fetches full media details for a media ID. */
+/** @internal Converts embedded featured media to a clean Media object without extra HTTP calls. */
+export function toMediaFromFeatured(raw?: RawFeaturedMedia): Media | undefined {
+  if (!raw?.media_details) return undefined
+  return {
+    id: raw.id,
+    url: raw.source_url,
+    alt: raw.alt_text ?? '',
+    mimeType: raw.mime_type ?? '',
+    width: raw.media_details.width,
+    height: raw.media_details.height,
+    sizes: Object.fromEntries(
+      Object.entries(raw.media_details.sizes ?? {}).map(([key, size]) => [
+        key,
+        {
+          url: size.source_url,
+          width: size.width,
+          height: size.height,
+          mimeType: size.mime_type,
+          filesize: size.filesize,
+        },
+      ]),
+    ),
+  }
+}
+
+/**
+ * @deprecated Use `toMediaFromFeatured` instead — it avoids the extra HTTP call
+ * by using embedded media data from `_embed`.
+ * @internal Fetches full media details for a media ID.
+ */
 export async function hydrateMedia(client: WordpressClient, id?: number): Promise<Media | null> {
   if (!id) return null
   try {

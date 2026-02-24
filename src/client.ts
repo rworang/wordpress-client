@@ -105,8 +105,7 @@ export class WordpressClient {
       params: { _embed: true, page, per_page, ...rest },
     })
     const paginated = extractPagination(response, page, per_page)
-    const posts = await Promise.all(paginated.data.map((raw) => toPost(raw, this)))
-    return { ...paginated, data: posts }
+    return { ...paginated, data: paginated.data.map(toPost) }
   }
 
   /**
@@ -124,7 +123,7 @@ export class WordpressClient {
     const response = await this.http.get<RawPost[]>('/posts', {
       params: { slug, _embed: true },
     })
-    return response.data.length ? await toPost(response.data[0], this) : null
+    return response.data.length ? toPost(response.data[0]) : null
   }
 
   /**
@@ -136,7 +135,7 @@ export class WordpressClient {
     const response = await this.http.get<RawPost>(`/posts/${id}`, {
       params: { _embed: true },
     })
-    return toPost(response.data, this)
+    return toPost(response.data)
   }
 
   // ---- Categories ----

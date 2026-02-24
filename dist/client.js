@@ -69,8 +69,7 @@ export class WordpressClient {
             params: { _embed: true, page, per_page, ...rest },
         });
         const paginated = extractPagination(response, page, per_page);
-        const posts = await Promise.all(paginated.data.map((raw) => toPost(raw, this)));
-        return { ...paginated, data: posts };
+        return { ...paginated, data: paginated.data.map(toPost) };
     }
     /**
      * Fetch a single post by its URL slug.
@@ -87,7 +86,7 @@ export class WordpressClient {
         const response = await this.http.get('/posts', {
             params: { slug, _embed: true },
         });
-        return response.data.length ? await toPost(response.data[0], this) : null;
+        return response.data.length ? toPost(response.data[0]) : null;
     }
     /**
      * Fetch a single post by its numeric ID.
@@ -98,7 +97,7 @@ export class WordpressClient {
         const response = await this.http.get(`/posts/${id}`, {
             params: { _embed: true },
         });
-        return toPost(response.data, this);
+        return toPost(response.data);
     }
     // ---- Categories ----
     /**
