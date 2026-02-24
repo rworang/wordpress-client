@@ -63,6 +63,7 @@ export interface WordpressClientOptions {
  */
 export class WordpressClient {
   private readonly http: AxiosInstance
+  private readonly siteHttp: AxiosInstance
   private readonly siteBaseURL: string
 
   /**
@@ -82,24 +83,30 @@ export class WordpressClient {
 
     this.siteBaseURL = baseURL.replace(/\/$/, '')
 
+    const retryConfig = {
+      retries: retry?.retries ?? 3,
+      retryDelay: exponentialDelay,
+      retryCondition: (error: AxiosError) =>
+        isNetworkOrIdempotentRequestError(error) ||
+        error.response?.status === 408 ||
+        error.response?.status === 429,
+    }
+
+    const errorInterceptor = (error: AxiosError) => this.handleError(error)
+
     this.http = axios.create({
       baseURL: `${this.siteBaseURL}/wp-json/${namespace}`,
       timeout,
     })
+    axiosRetry(this.http, retryConfig)
+    this.http.interceptors.response.use((r) => r, errorInterceptor)
 
-    axiosRetry(this.http, {
-      retries: retry?.retries ?? 3,
-      retryDelay: exponentialDelay,
-      retryCondition: (error) =>
-        isNetworkOrIdempotentRequestError(error) ||
-        error.response?.status === 408 ||
-        error.response?.status === 429,
+    this.siteHttp = axios.create({
+      baseURL: `${this.siteBaseURL}/wp-json`,
+      timeout,
     })
-
-    this.http.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => this.handleError(error)
-    )
+    axiosRetry(this.siteHttp, retryConfig)
+    this.siteHttp.interceptors.response.use((r) => r, errorInterceptor)
   }
 
   // ---- Posts ----
@@ -220,9 +227,8 @@ export class WordpressClient {
    */
   async cacheVersion(): Promise<string | null> {
     try {
-      const response = await axios.get<{ version: string }>(
-        `${this.siteBaseURL}/wp-json/worang/v1/cache-version`,
-        { timeout: this.http.defaults.timeout as number },
+      const response = await this.siteHttp.get<{ version: string }>(
+        '/worang/v1/cache-version',
       )
       return String(response.data.version)
     } catch {
