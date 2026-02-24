@@ -34,6 +34,11 @@ export interface WordpressClientOptions {
     namespace?: string;
     /** Request timeout in milliseconds - defaults to 10000 */
     timeout?: number;
+    /** Retry configuration for transient failures (408, 429, 5xx) */
+    retry?: {
+        /** Number of retry attempts - defaults to 3 */
+        retries?: number;
+    };
 }
 /**
  * Typed client for fetching posts, categories, and media from WordPress.
@@ -48,13 +53,14 @@ export interface WordpressClientOptions {
  */
 export declare class WordpressClient {
     private readonly http;
+    private readonly siteHttp;
     private readonly siteBaseURL;
     /**
      * Creates a new WordPress client.
      *
      * @throws {Error} If baseURL is not provided
      */
-    constructor({ baseURL, namespace, timeout, }: WordpressClientOptions);
+    constructor({ baseURL, namespace, timeout, retry, }: WordpressClientOptions);
     /**
      * Fetch a paginated list of posts.
      *
@@ -118,6 +124,7 @@ export declare class WordpressClient {
      * @returns The version string, or null if the endpoint is unavailable
      */
     cacheVersion(): Promise<string | null>;
+    private dedupGet;
     private handleError;
 }
 //# sourceMappingURL=client.d.ts.map

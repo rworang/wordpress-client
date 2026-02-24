@@ -5,6 +5,7 @@
  * - WordpressNotFoundError: Thrown when a resource doesn't exist (404)
  * - WordpressAuthError: Thrown when authentication fails (401/403)
  * - WordpressValidationError: Thrown for invalid parameters (400)
+ * - WordpressSchemaError: Thrown when API response doesn't match expected schema
  *
  * @example
  * import { WordpressNotFoundError, WordpressAuthError } from '@worang/wordpress-client'
@@ -69,5 +70,23 @@ export declare class WordpressValidationError extends WordpressError {
     constructor(message: string, 
     /** Map of field names to their validation error messages */
     details?: Record<string, string[]> | undefined);
+}
+/**
+ * Thrown when an API response doesn't match the expected schema.
+ *
+ * The `issues` property contains field-level validation errors from Zod.
+ */
+export declare class WordpressSchemaError extends WordpressError {
+    /** Zod validation issues */
+    readonly issues: Array<{
+        path: PropertyKey[];
+        message: string;
+    }>;
+    constructor(resource: string, 
+    /** Zod validation issues */
+    issues: Array<{
+        path: PropertyKey[];
+        message: string;
+    }>);
 }
 //# sourceMappingURL=errors.d.ts.map
