@@ -17,6 +17,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
+import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
 import type { RawPost, RawMedia, RawCategory } from './types/raw'
 import type { Post, Media, Category } from './types/domain'
 import type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params'
@@ -42,6 +43,11 @@ export interface WordpressClientOptions {
   namespace?: string
   /** Request timeout in milliseconds - defaults to 10000 */
   timeout?: number
+  /** Retry configuration for transient failures (408, 429, 5xx) */
+  retry?: {
+    /** Number of retry attempts - defaults to 3 */
+    retries?: number
+  }
 }
 
 /**
@@ -68,6 +74,7 @@ export class WordpressClient {
     baseURL,
     namespace = 'wp/v2',
     timeout = 10_000,
+    retry,
   }: WordpressClientOptions) {
     if (!baseURL) {
       throw new Error('WordpressClient: baseURL is required')
@@ -78,6 +85,15 @@ export class WordpressClient {
     this.http = axios.create({
       baseURL: `${this.siteBaseURL}/wp-json/${namespace}`,
       timeout,
+    })
+
+    axiosRetry(this.http, {
+      retries: retry?.retries ?? 3,
+      retryDelay: exponentialDelay,
+      retryCondition: (error) =>
+        isNetworkOrIdempotentRequestError(error) ||
+        error.response?.status === 408 ||
+        error.response?.status === 429,
     })
 
     this.http.interceptors.response.use(
