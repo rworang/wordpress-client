@@ -36,6 +36,7 @@ export {
   WordpressNotFoundError,
   WordpressAuthError,
   WordpressValidationError,
+  WordpressSchemaError,
 } from './errors'
 
 // Adapters (for advanced use cases)

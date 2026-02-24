@@ -4,11 +4,13 @@
  *
  * Extracts embedded author, categories, and featured media from the
  * nested _embedded structure. Uses embedded media data directly
- * without extra HTTP calls.
+ * without extra HTTP calls. Validates input with Zod.
  */
 
 import type { RawPost } from '../types/raw'
 import type { Post, Author } from '../types/domain'
+import { RawPostSchema } from '../schemas/post'
+import { WordpressSchemaError } from '../errors'
 import { toCategory } from './category'
 import { toAuthor } from './author'
 import { toMediaFromFeatured } from './media'
@@ -17,6 +19,11 @@ const EMPTY_AUTHOR: Author = { id: 0, name: '', url: '', description: '' }
 
 /** @internal Converts a raw WordPress post to a clean Post object. */
 export const toPost = (raw: RawPost): Post => {
+  const result = RawPostSchema.safeParse(raw)
+  if (!result.success) {
+    throw new WordpressSchemaError('post', result.error.issues)
+  }
+
   const media = raw._embedded?.['wp:featuredmedia']?.[0]
   const cats = raw._embedded?.['wp:term']?.[0] ?? []
   const author = raw._embedded?.['author']?.[0]
