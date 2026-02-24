@@ -48,6 +48,7 @@ export interface WordpressClientOptions {
  */
 export declare class WordpressClient {
     private readonly http;
+    private readonly siteBaseURL;
     /**
      * Creates a new WordPress client.
      *
@@ -110,6 +111,13 @@ export declare class WordpressClient {
      * const { data: images } = await client.mediaList({ media_type: 'image' })
      */
     mediaList(params?: MediaQueryParams): Promise<PaginatedResponse<Media>>;
+    /**
+     * Fetch the cache version from a custom WordPress endpoint.
+     * Uses the `worang/v1` namespace, not the default `wp/v2`.
+     *
+     * @returns The version string, or null if the endpoint is unavailable
+     */
+    cacheVersion(): Promise<string | null>;
     private handleError;
 }
 //# sourceMappingURL=client.d.ts.map
