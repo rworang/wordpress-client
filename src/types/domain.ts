@@ -29,9 +29,9 @@ export interface Category {
   slug: string;
   /** Display name (e.g., 'Tech News') */
   name: string;
-  description: string;
+  description?: string;
   /** Number of posts in this category */
-  count: number;
+  count?: number;
 }
 
 /**

@@ -58,8 +58,8 @@ export interface RawCategory {
   id: number;
   slug: string;
   name: string;
-  description: string;
-  count: number;
+  description?: string;
+  count?: number;
 }
 
 export interface RawAuthor {
