@@ -34,6 +34,7 @@ import { WordpressError, WordpressNotFoundError, WordpressAuthError } from './er
  */
 export class WordpressClient {
     http;
+    siteBaseURL;
     /**
      * Creates a new WordPress client.
      *
@@ -43,8 +44,9 @@ export class WordpressClient {
         if (!baseURL) {
             throw new Error('WordpressClient: baseURL is required');
         }
+        this.siteBaseURL = baseURL.replace(/\/$/, '');
         this.http = axios.create({
-            baseURL: `${baseURL.replace(/\/$/, '')}/wp-json/${namespace}`,
+            baseURL: `${this.siteBaseURL}/wp-json/${namespace}`,
             timeout,
         });
         this.http.interceptors.response.use((response) => response, (error) => this.handleError(error));
@@ -147,6 +149,22 @@ export class WordpressClient {
         });
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toMedia) };
+    }
+    // ---- Custom Endpoints ----
+    /**
+     * Fetch the cache version from a custom WordPress endpoint.
+     * Uses the `worang/v1` namespace, not the default `wp/v2`.
+     *
+     * @returns The version string, or null if the endpoint is unavailable
+     */
+    async cacheVersion() {
+        try {
+            const response = await axios.get(`${this.siteBaseURL}/wp-json/worang/v1/cache-version`, { timeout: this.http.defaults.timeout });
+            return String(response.data.version);
+        }
+        catch {
+            return null;
+        }
     }
     // ---- Error Handling ----
     handleError(error) {
