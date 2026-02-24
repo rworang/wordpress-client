@@ -239,21 +239,23 @@ export class WordpressClient {
   // ---- Error Handling ----
 
   private handleError(error: AxiosError): never {
+    const requestUrl = error.config?.url ?? 'unknown'
+
     if (error.response) {
       const status = error.response.status
-      const data = error.response.data as { message?: string; code?: string } | undefined
+      const raw = error.response.data
+      const data = typeof raw === 'object' && raw !== null
+        ? raw as { message?: string; code?: string }
+        : undefined
+      const message = data?.message || error.message
 
       if (status === 404) {
-        throw new WordpressNotFoundError('Resource', 'unknown')
+        throw new WordpressNotFoundError('Resource', requestUrl)
       }
       if (status === 401 || status === 403) {
-        throw new WordpressAuthError(data?.message)
+        throw new WordpressAuthError(message)
       }
-      throw new WordpressError(
-        data?.message || error.message,
-        status,
-        data?.code
-      )
+      throw new WordpressError(message, status, data?.code)
     }
     throw new WordpressError(error.message)
   }
