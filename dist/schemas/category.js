@@ -3,7 +3,7 @@ export const RawCategorySchema = z.object({
     id: z.number(),
     slug: z.string(),
     name: z.string(),
-    description: z.string(),
-    count: z.number(),
+    description: z.string().optional(),
+    count: z.number().optional(),
 });
 //# sourceMappingURL=category.js.map

@@ -37,8 +37,8 @@ export declare const RawPostSchema: z.ZodObject<{
             id: z.ZodNumber;
             slug: z.ZodString;
             name: z.ZodString;
-            description: z.ZodString;
-            count: z.ZodNumber;
+            description: z.ZodOptional<z.ZodString>;
+            count: z.ZodOptional<z.ZodNumber>;
         }, z.core.$strip>>>>;
         author: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodNumber;
