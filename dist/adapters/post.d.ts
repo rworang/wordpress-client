@@ -4,7 +4,7 @@
  *
  * Extracts embedded author, categories, and featured media from the
  * nested _embedded structure. Uses embedded media data directly
- * without extra HTTP calls.
+ * without extra HTTP calls. Validates input with Zod.
  */
 import type { RawPost } from '../types/raw';
 import type { Post } from '../types/domain';

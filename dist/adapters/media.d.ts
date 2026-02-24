@@ -3,7 +3,7 @@
  * Transforms raw WordPress media responses into clean Media objects.
  *
  * Flattens the nested media_details structure and converts responsive
- * image sizes into an easy-to-use sizes record.
+ * image sizes into an easy-to-use sizes record. Validates input with Zod.
  */
 import type { WordpressClient } from '../client';
 import type { RawMedia, RawFeaturedMedia } from '../types/raw';
