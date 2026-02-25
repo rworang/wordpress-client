@@ -11,10 +11,6 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./types": {
-      "import": "./dist/types/index.js",
-      "types": "./dist/types/index.d.ts"
     }
   },
   "files": [
@@ -24,6 +20,8 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -32,7 +30,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "msw": "^2.12.10",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.18"
   },
   "repository": {
     "type": "git",
