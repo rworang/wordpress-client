@@ -29,6 +29,7 @@ export type {
 } from './types/params'
 
 export type { PaginatedResponse } from './utils/pagination'
+export type { CacheOptions } from './utils/cache'
 
 // Errors
 export {

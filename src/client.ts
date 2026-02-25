@@ -27,6 +27,7 @@ import { toCategory } from './adapters/category'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
 import { WordpressError, WordpressNotFoundError, WordpressAuthError } from './errors'
 import { dedup } from './utils/dedup'
+import { TTLCache, type CacheOptions } from './utils/cache'
 
 /**
  * Configuration options for the WordPress client.
@@ -49,6 +50,8 @@ export interface WordpressClientOptions {
     /** Number of retry attempts - defaults to 3 */
     retries?: number
   }
+  /** Response cache configuration. Set to false to disable caching entirely. */
+  cache?: CacheOptions | false
 }
 
 /**
@@ -66,6 +69,7 @@ export class WordpressClient {
   private readonly http: AxiosInstance
   private readonly siteHttp: AxiosInstance
   private readonly siteBaseURL: string
+  private readonly cache: TTLCache<unknown> | null
 
   /**
    * Creates a new WordPress client.
@@ -77,6 +81,7 @@ export class WordpressClient {
     namespace = 'wp/v2',
     timeout = 10_000,
     retry,
+    cache,
   }: WordpressClientOptions) {
     if (!baseURL) {
       throw new Error('WordpressClient: baseURL is required')
@@ -108,6 +113,8 @@ export class WordpressClient {
     })
     axiosRetry(this.siteHttp, retryConfig)
     this.siteHttp.interceptors.response.use((r) => r, errorInterceptor)
+
+    this.cache = cache === false ? null : new TTLCache(cache)
   }
 
   // ---- Posts ----
@@ -239,9 +246,24 @@ export class WordpressClient {
 
   // ---- Internal ----
 
+  /** Clear all cached responses. */
+  clearCache(): void {
+    this.cache?.clear()
+  }
+
   private dedupGet<T>(instance: AxiosInstance, url: string, params?: Record<string, unknown>) {
     const key = `${url}:${JSON.stringify(params ?? {})}`
-    return dedup(key, () => instance.get<T>(url, params ? { params } : undefined))
+
+    if (this.cache) {
+      const cached = this.cache.get(key)
+      if (cached) return cached as Promise<import('axios').AxiosResponse<T>>
+    }
+
+    return dedup(key, async () => {
+      const response = await instance.get<T>(url, params ? { params } : undefined)
+      this.cache?.set(key, response)
+      return response
+    })
   }
 
   // ---- Error Handling ----
