@@ -9,7 +9,7 @@
 import type { WordpressClient } from '../client'
 import type { RawMedia, RawFeaturedMedia } from '../types/raw'
 import type { Media } from '../types/domain'
-import { RawMediaSchema } from '../schemas/media'
+import { RawMediaSchema, RawFeaturedMediaSchema } from '../schemas/media'
 import { WordpressSchemaError } from '../errors'
 
 /** @internal Converts a raw WordPress media item to a clean Media object. */
@@ -44,6 +44,12 @@ export const toMedia = (raw: RawMedia): Media => {
 /** @internal Converts embedded featured media to a clean Media object without extra HTTP calls. */
 export function toMediaFromFeatured(raw?: RawFeaturedMedia): Media | undefined {
   if (!raw?.media_details) return undefined
+
+  const result = RawFeaturedMediaSchema.safeParse(raw)
+  if (!result.success) {
+    throw new WordpressSchemaError('featured media', result.error.issues)
+  }
+
   return {
     id: raw.id,
     url: raw.source_url,
