@@ -1,0 +1,207 @@
+import { describe, it, expect } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { server } from './server'
+import { WordpressClient } from '../src/client'
+import { WordpressNotFoundError, WordpressAuthError } from '../src/errors'
+
+const BASE_URL = 'https://test.wp.com'
+
+function createClient(options?: { cache?: false | { ttl?: number } }) {
+  return new WordpressClient({
+    baseURL: BASE_URL,
+    retry: { retries: 0 },
+    ...options,
+  })
+}
+
+describe('WordpressClient', () => {
+  describe('posts', () => {
+    it('fetches paginated posts', async () => {
+      const client = createClient()
+      const result = await client.posts()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].slug).toBe('hello-world')
+      expect(result.pagination.total).toBe(1)
+      expect(result.pagination.totalPages).toBe(1)
+    })
+
+    it('returns post by slug', async () => {
+      const client = createClient()
+      const post = await client.post('hello-world')
+      expect(post).not.toBeNull()
+      expect(post!.title).toBe('Hello World')
+    })
+
+    it('returns null for non-existent slug', async () => {
+      const client = createClient()
+      const post = await client.post('not-found')
+      expect(post).toBeNull()
+    })
+
+    it('fetches post by ID', async () => {
+      const client = createClient()
+      const post = await client.postById(1)
+      expect(post.slug).toBe('hello-world')
+    })
+
+    it('throws WordpressNotFoundError for missing post ID', async () => {
+      const client = createClient()
+      await expect(client.postById(999)).rejects.toThrow(WordpressNotFoundError)
+    })
+  })
+
+  describe('categories', () => {
+    it('fetches paginated categories', async () => {
+      const client = createClient()
+      const result = await client.categories()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].slug).toBe('tech')
+    })
+
+    it('returns category by slug', async () => {
+      const client = createClient()
+      const cat = await client.category('tech')
+      expect(cat).not.toBeNull()
+      expect(cat!.name).toBe('Technology')
+    })
+
+    it('returns null for non-existent category slug', async () => {
+      const client = createClient()
+      const cat = await client.category('not-found')
+      expect(cat).toBeNull()
+    })
+  })
+
+  describe('media', () => {
+    it('fetches media by ID', async () => {
+      const client = createClient()
+      const media = await client.media(10)
+      expect(media.id).toBe(10)
+      expect(media.mimeType).toBe('image/jpeg')
+    })
+
+    it('throws WordpressNotFoundError for missing media', async () => {
+      const client = createClient()
+      await expect(client.media(999)).rejects.toThrow(WordpressNotFoundError)
+    })
+
+    it('fetches paginated media list', async () => {
+      const client = createClient()
+      const result = await client.mediaList()
+      expect(result.data).toHaveLength(1)
+      expect(result.pagination.total).toBe(1)
+    })
+  })
+
+  describe('error handling', () => {
+    it('throws WordpressAuthError for 403', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            { code: 'rest_forbidden', message: 'Forbidden' },
+            { status: 403 },
+          )
+        }),
+      )
+
+      const client = createClient()
+      await expect(client.posts()).rejects.toThrow(WordpressAuthError)
+    })
+  })
+
+  describe('pagination', () => {
+    it('defaults to page 1, perPage 10', async () => {
+      const client = createClient()
+      const result = await client.posts()
+      expect(result.pagination.page).toBe(1)
+      expect(result.pagination.perPage).toBe(10)
+    })
+
+    it('handles missing pagination headers gracefully', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json([])
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.posts()
+      expect(result.pagination.total).toBe(0)
+      expect(result.pagination.totalPages).toBe(1)
+    })
+  })
+
+  describe('cache', () => {
+    it('returns cached response on second call', async () => {
+      let callCount = 0
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/categories`, () => {
+          callCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.categories()
+      await client.categories()
+      expect(callCount).toBe(1)
+    })
+
+    it('does not cache when disabled', async () => {
+      let callCount = 0
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/categories`, () => {
+          callCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient({ cache: false })
+      await client.categories()
+      await client.categories()
+      expect(callCount).toBe(2)
+    })
+
+    it('clearCache() invalidates cached responses', async () => {
+      let callCount = 0
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/categories`, () => {
+          callCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.categories()
+      client.clearCache()
+      await client.categories()
+      expect(callCount).toBe(2)
+    })
+  })
+
+  describe('cacheVersion', () => {
+    it('returns version string', async () => {
+      const client = createClient()
+      const version = await client.cacheVersion()
+      expect(version).toBe('v42')
+    })
+
+    it('returns null on failure', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang/v1/cache-version`, () => {
+          return HttpResponse.json({}, { status: 500 })
+        }),
+      )
+
+      const client = createClient()
+      const version = await client.cacheVersion()
+      expect(version).toBeNull()
+    })
+  })
+})
