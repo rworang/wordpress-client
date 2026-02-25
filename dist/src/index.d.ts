@@ -1,0 +1,20 @@
+/**
+ * Main entry point for @worang/wordpress-client.
+ *
+ * Exports the client, domain types, query params, errors, and adapters.
+ *
+ * @example
+ * import { WordpressClient, Post, PostQueryParams } from '@worang/wordpress-client'
+ *
+ * const client = new WordpressClient({ baseURL: 'https://example.com' })
+ * const { data: posts } = await client.posts({ per_page: 5 })
+ */
+export { WordpressClient } from './client';
+export type { WordpressClientOptions } from './client';
+export type { Post, Media, Category, Author, } from './types/domain';
+export type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams, } from './types/params';
+export type { PaginatedResponse } from './utils/pagination';
+export type { CacheOptions } from './utils/cache';
+export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressSchemaError, } from './errors';
+export { toPost, toMedia, toCategory, toAuthor } from './adapters';
+//# sourceMappingURL=index.d.ts.map

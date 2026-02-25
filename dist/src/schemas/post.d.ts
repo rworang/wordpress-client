@@ -1,0 +1,51 @@
+import { z } from 'zod';
+export declare const RawPostSchema: z.ZodObject<{
+    id: z.ZodNumber;
+    slug: z.ZodString;
+    title: z.ZodObject<{
+        rendered: z.ZodString;
+    }, z.core.$strip>;
+    content: z.ZodObject<{
+        rendered: z.ZodString;
+    }, z.core.$strip>;
+    excerpt: z.ZodObject<{
+        rendered: z.ZodString;
+    }, z.core.$strip>;
+    date: z.ZodString;
+    sticky: z.ZodBoolean;
+    _embedded: z.ZodOptional<z.ZodObject<{
+        'wp:featuredmedia': z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            source_url: z.ZodString;
+            alt_text: z.ZodString;
+            mime_type: z.ZodOptional<z.ZodString>;
+            media_details: z.ZodOptional<z.ZodObject<{
+                width: z.ZodNumber;
+                height: z.ZodNumber;
+                filesize: z.ZodOptional<z.ZodNumber>;
+                sizes: z.ZodRecord<z.ZodString, z.ZodObject<{
+                    file: z.ZodString;
+                    width: z.ZodNumber;
+                    height: z.ZodNumber;
+                    mime_type: z.ZodString;
+                    source_url: z.ZodString;
+                    filesize: z.ZodOptional<z.ZodNumber>;
+                }, z.core.$strip>>;
+            }, z.core.$strip>>;
+        }, z.core.$strip>>>;
+        'wp:term': z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            slug: z.ZodString;
+            name: z.ZodString;
+            description: z.ZodOptional<z.ZodString>;
+            count: z.ZodOptional<z.ZodNumber>;
+        }, z.core.$strip>>>>;
+        author: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            name: z.ZodString;
+            url: z.ZodString;
+            description: z.ZodString;
+        }, z.core.$strip>>>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+//# sourceMappingURL=post.d.ts.map
