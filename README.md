@@ -340,13 +340,13 @@ const { data: images } = await client.mediaList({
 
 ### `cacheVersion()`
 
-Probe the optional `worang/v1/cache-version` custom endpoint for a version string.
+Fetch the cache version from the `worang/v1/cache-version` custom endpoint (registered by the Worang Dev Tools plugin).
 
 ```typescript
 async cacheVersion(): Promise<string | null>
 ```
 
-Returns `null` if the endpoint is not registered or errors. This is an optional integration — see [Custom Endpoints](#9-custom-endpoints).
+Returns the version string, or `null` if the endpoint is unavailable. See [Custom Endpoints](#9-custom-endpoints).
 
 ---
 
@@ -571,27 +571,35 @@ const hasNextPage = pagination.page < pagination.totalPages
 
 ### `cacheVersion()` — optional integration
 
-Probes the `worang/v1/cache-version` endpoint for a version string. This is an **optional integration point** — the endpoint is not part of the WordPress REST API and may or may not exist on a given site.
+Fetches a cache version string from the `worang/v1/cache-version` custom endpoint. This endpoint is **not part of the WordPress REST API** — it is registered by the **Worang Dev Tools** plugin.
 
 ```typescript
 const version = await client.cacheVersion()
-// "1.0.3" or null if endpoint is unavailable
+// "1709312400" or null if endpoint is unavailable
 ```
 
-**Backend requirement:** This method only returns a value if your WordPress site registers the route via a custom plugin:
+**How it works on the backend:** The plugin hooks into `save_post` to update a timestamp in `wp_options` whenever any post is saved. The REST route returns that timestamp:
 
 ```php
-register_rest_route('worang/v1', '/cache-version', [
-    'methods'  => 'GET',
-    'callback' => fn () => ['version' => get_option('cache_version', '0')],
-]);
+add_action('save_post', function($post_id) {
+    if (wp_is_post_revision($post_id)) return;
+    update_option('worang_cache_version', time());
+});
+
+add_action('rest_api_init', function() {
+    register_rest_route('worang/v1', '/cache-version', [
+        'methods'  => 'GET',
+        'callback' => fn() => ['version' => get_option('worang_cache_version', 0)],
+        'permission_callback' => '__return_true',
+    ]);
+});
 ```
 
-If the endpoint does not exist, `cacheVersion()` returns `null`. It never throws.
+**Use case:** Cache invalidation. Compare the returned version against a previously stored value to decide whether to refresh cached content. The version changes whenever a post is created, updated, or deleted.
 
-**Use case:** Cache-busting or determining when WordPress content has changed. Compare the returned version against a previously stored value to decide whether to refresh cached content.
+**Graceful degradation:** If the plugin is not installed or the endpoint is unreachable, `cacheVersion()` returns `null`. It never throws. This makes it safe to use unconditionally — sites without the plugin simply skip cache-busting logic.
 
-**Behavior:** All errors are caught internally. The method uses the `siteHttp` axios instance (base path `/wp-json`) rather than the namespace-scoped instance, since it targets a non-standard namespace.
+**Note:** The method uses the `siteHttp` axios instance (base path `/wp-json`) rather than the namespace-scoped instance, since it targets the `worang/v1` namespace instead of the default `wp/v2`.
 
 ---
 
@@ -634,7 +642,7 @@ The following features appear to be recent additions based on the commit history
 - **`clearCache()`** method for manual cache invalidation
 - **Request deduplication** — concurrent identical requests share a single HTTP call
 - **`WordpressSchemaError`** — thrown when API responses fail Zod validation
-- **`cacheVersion()`** — optional integration point for cache-busting workflows
+- **`cacheVersion()`** — cache invalidation via Worang Dev Tools plugin endpoint
 - **`exclude` parameter** in `PostQueryParams` — exclude specific post IDs from results
 - **`mediaList()`** — paginated media listing
 - **Optional `description` and `count`** fields on `Category`
