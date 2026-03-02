@@ -168,16 +168,23 @@ Retries use **exponential backoff** via `axios-retry`. The following conditions 
 
 ### Read-only design
 
-This client only supports `GET` requests. There are no methods for creating, updating, or deleting content. Authentication headers are never sent.
+This client only supports `GET` requests. There are no methods for creating, updating, or deleting content. Authentication headers are never sent. This is a deliberate constraint, not an omission — the client is purpose-built for content consumption.
 
-### Adapter pattern
+### Why raw WordPress types are not exposed
 
-Raw WordPress REST API responses use nested structures (e.g., `{ title: { rendered: "Hello" } }`). Adapters transform these into flat, clean domain types:
+The WordPress REST API returns deeply nested, inconsistently shaped responses. Titles arrive as `{ rendered: "Hello" }`. Embedded authors, categories, and featured media are buried inside `_embedded` arrays-of-arrays. Field names mix `snake_case` with arbitrary nesting.
+
+This client treats raw API shapes as an internal implementation detail. Every response passes through:
 
 ```
-WordPress API  →  Zod validation  →  Adapter  →  Domain type
-{ title: { rendered: "..." } }    →    { title: "..." }
+WordPress API  →  Zod schema validation  →  Adapter  →  Clean domain type
 ```
+
+1. **Zod validates** the raw response, catching unexpected shapes at runtime instead of letting malformed data propagate silently.
+2. **Adapters flatten** nested structures into predictable, documented interfaces (`Post`, `Category`, `Media`, `Author`).
+3. **Domain types** are the only public contract. They are stable, flat, and safe to build UI against.
+
+This means consumers never depend on WordPress internals. If the REST API changes field nesting or naming, only the adapters and schemas need updating — application code stays untouched.
 
 ### Runtime validation with Zod
 
@@ -333,13 +340,13 @@ const { data: images } = await client.mediaList({
 
 ### `cacheVersion()`
 
-Fetch the cache version string from the custom `worang/v1/cache-version` endpoint.
+Probe the optional `worang/v1/cache-version` custom endpoint for a version string.
 
 ```typescript
 async cacheVersion(): Promise<string | null>
 ```
 
-Returns `null` if the endpoint is unavailable or errors. See [Custom Endpoints](#9-custom-endpoints).
+Returns `null` if the endpoint is not registered or errors. This is an optional integration — see [Custom Endpoints](#9-custom-endpoints).
 
 ---
 
@@ -562,18 +569,29 @@ const hasNextPage = pagination.page < pagination.totalPages
 
 ## 9. Custom Endpoints
 
-### `cacheVersion()`
+### `cacheVersion()` — optional integration
 
-Fetches a version string from the `worang/v1/cache-version` custom endpoint. This endpoint is **not part of the standard WordPress REST API** — it must be registered by a custom plugin on your WordPress site.
+Probes the `worang/v1/cache-version` endpoint for a version string. This is an **optional integration point** — the endpoint is not part of the WordPress REST API and may or may not exist on a given site.
 
 ```typescript
 const version = await client.cacheVersion()
 // "1.0.3" or null if endpoint is unavailable
 ```
 
+**Backend requirement:** This method only returns a value if your WordPress site registers the route via a custom plugin:
+
+```php
+register_rest_route('worang/v1', '/cache-version', [
+    'methods'  => 'GET',
+    'callback' => fn () => ['version' => get_option('cache_version', '0')],
+]);
+```
+
+If the endpoint does not exist, `cacheVersion()` returns `null`. It never throws.
+
 **Use case:** Cache-busting or determining when WordPress content has changed. Compare the returned version against a previously stored value to decide whether to refresh cached content.
 
-**Behavior:** Unlike other methods, `cacheVersion()` catches all errors internally and returns `null` if the endpoint is missing or fails. It uses the `siteHttp` axios instance (base path `/wp-json`) rather than the namespace-scoped instance.
+**Behavior:** All errors are caught internally. The method uses the `siteHttp` axios instance (base path `/wp-json`) rather than the namespace-scoped instance, since it targets a non-standard namespace.
 
 ---
 
@@ -616,7 +634,7 @@ The following features appear to be recent additions based on the commit history
 - **`clearCache()`** method for manual cache invalidation
 - **Request deduplication** — concurrent identical requests share a single HTTP call
 - **`WordpressSchemaError`** — thrown when API responses fail Zod validation
-- **`cacheVersion()`** — custom endpoint for cache-busting workflows
+- **`cacheVersion()`** — optional integration point for cache-busting workflows
 - **`exclude` parameter** in `PostQueryParams` — exclude specific post IDs from results
 - **`mediaList()`** — paginated media listing
 - **Optional `description` and `count`** fields on `Category`
