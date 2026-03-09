@@ -50,6 +50,47 @@ describe('WordpressClient', () => {
     })
   })
 
+  describe('pages', () => {
+    it('fetches paginated pages', async () => {
+      const client = createClient()
+      const result = await client.pages()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].slug).toBe('about')
+      expect(result.pagination.total).toBe(1)
+    })
+
+    it('returns page by slug', async () => {
+      const client = createClient()
+      const page = await client.page('about')
+      expect(page).not.toBeNull()
+      expect(page!.title).toBe('About Us')
+    })
+
+    it('returns null for non-existent page slug', async () => {
+      const client = createClient()
+      const page = await client.page('not-found')
+      expect(page).toBeNull()
+    })
+
+    it('fetches page by ID', async () => {
+      const client = createClient()
+      const page = await client.pageById(2)
+      expect(page.slug).toBe('about')
+    })
+
+    it('throws WordpressNotFoundError for missing page ID', async () => {
+      const client = createClient()
+      await expect(client.pageById(999)).rejects.toThrow(WordpressNotFoundError)
+    })
+
+    it('includes parent and menuOrder fields', async () => {
+      const client = createClient()
+      const page = await client.page('about')
+      expect(page!.parent).toBe(0)
+      expect(page!.menuOrder).toBe(1)
+    })
+  })
+
   describe('categories', () => {
     it('fetches paginated categories', async () => {
       const client = createClient()
