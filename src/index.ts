@@ -47,5 +47,3 @@ export {
   WordpressSchemaError,
 } from './errors'
 
-// Adapters (for advanced use cases)
-export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters'
