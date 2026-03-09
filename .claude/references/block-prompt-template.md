@@ -17,7 +17,7 @@ section — empty sections signal an incomplete prompt.
 
 ## Role
 
-You are a senior TypeScript developer working on the Worang CMS project. You follow
+You are a senior [language] developer working on [project name]. You follow
 established patterns exactly and produce code that integrates seamlessly with the
 existing codebase.
 
@@ -28,15 +28,10 @@ OpenAPI integration and Zod schema design."]
 
 ## Repository
 
-Repository: `rworang/worang-cms`
+Repository: `[owner/repo]`
 
-The project is a pnpm monorepo with:
-- `packages/platform` — auth, users, sites, memberships
-- `packages/cms` — pages, assets, posts, authors, categories, navigation, generator
-- `packages/apps/server` — thin HTTP entry point
-- `packages/theme` — Vue 3 design system (source-only)
-- `packages/apps/admin-ui` — CMS dashboard
-- `packages/apps/platform-ui` — platform dashboard
+[Describe the project structure in 4–6 bullet points: key packages/directories and
+what each one is responsible for.]
 
 ---
 
@@ -51,6 +46,7 @@ Before writing any code, read these files in order:
 5. `[file path]` — [what it shows; which section matters]
 
 **Rules for this section:**
+
 - 5–10 files maximum — more than 10 and the LLM skims everything
 - Ordered by importance — most critical patterns first
 - One-line annotation per file — what it shows and which section matters
@@ -66,13 +62,16 @@ Before writing any code, read these files in order:
 [Description of what to build]
 
 **Files to create:**
+
 - `[path]` — [what it does]
 - `[path]` — [what it does]
 
 **Files to modify:**
+
 - `[path]` — [what to change]
 
 **Acceptance criteria:**
+
 - [ ] [Criterion 1]
 - [ ] [Criterion 2]
 
@@ -92,10 +91,10 @@ Before writing any code, read these files in order:
 
 Complete all of these before marking the block done:
 
-- [ ] `pnpm test` — all existing tests pass
+- [ ] Tests — all existing tests pass
 - [ ] New tests added for all new code
-- [ ] `pnpm build` — no TypeScript errors
-- [ ] `pnpm --filter @worang-cms/server dev` — server starts without errors
+- [ ] Build — no TypeScript errors
+- [ ] Server/app starts without errors
 - [ ] [Block-specific verification step]
 - [ ] [Block-specific verification step]
 - [ ] Result summary written and committed on this branch
@@ -108,6 +107,7 @@ Write the result summary BEFORE requesting merge. The result summary is part of
 the deliverable — it must be committed and pushed on the same branch as the code.
 
 This is the last commit on the branch:
+
 1. Complete all verification steps above
 2. Write the result summary at `.sprints/{sprint}/results/block-NN-name.md`
 3. `git add` the result summary
@@ -133,16 +133,16 @@ the LLM guesses at patterns instead of following established ones.
 ```markdown
 ## Read These First
 
-1. `packages/cms/src/authors/author.routes.ts` — canonical route pattern for this
+1. `src/[module]/[module].routes.ts` — canonical route pattern for this
    codebase; pay attention to the `createRoute()` + `app.openapi()` structure at
    the bottom and how the middleware chain is assembled
-2. `packages/cms/src/authors/author.usecases.ts` — thin usecase pattern; note how
+2. `src/[module]/[module].usecases.ts` — thin usecase pattern; note how
    errors are typed as domain errors, not generic exceptions
-3. `packages/cms/src/authors/author.pg.repo.ts` — PostgreSQL repository pattern;
+3. `src/[module]/[module].pg.repo.ts` — PostgreSQL repository pattern;
    note the `sql` tagged template usage and how rows are mapped to domain entities
-4. `packages/cms/src/authors/author.schemas.ts` — Zod schema registration with
+4. `src/[module]/[module].schemas.ts` — Zod schema registration with
    `.openapi()` — every schema used in routes must be registered this way
-5. `packages/cms/src/authors/author.test.ts` — test structure: note the
+5. `src/[module]/[module].test.ts` — test structure: note the
    `createTestApp()` helper, the database setup/teardown, and assertion patterns
 ```
 
@@ -164,17 +164,18 @@ existing patterns".
 
 A block prompt budget of ~100K tokens breaks down roughly as:
 
-| Component | Token estimate | Notes |
-|-----------|---------------|-------|
-| Block prompt (instructions) | ~2K | Keep it focused |
-| "Read These First" files (5–10 files) | ~30–50K | ~3–5K per file |
-| LLM output (code + result summary) | ~20–30K | |
-| Safety margin | ~15–30K | For reasoning, tool calls |
-| **Total** | ~70–110K | |
+| Component                             | Token estimate | Notes                     |
+| ------------------------------------- | -------------- | ------------------------- |
+| Block prompt (instructions)           | ~2K            | Keep it focused           |
+| "Read These First" files (5–10 files) | ~30–50K        | ~3–5K per file            |
+| LLM output (code + result summary)    | ~20–30K        |                           |
+| Safety margin                         | ~15–30K        | For reasoning, tool calls |
+| **Total**                             | ~70–110K       |                           |
 
 ### Splitting Heuristics
 
 Split a block when:
+
 - It touches more than 15 files
 - It spans both backend and frontend
 - It requires understanding two different subsystems

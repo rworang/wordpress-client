@@ -11,9 +11,8 @@ Standard verification steps that every block must complete before requesting mer
   - No regressions introduced
 - [ ] New tests added for all new code
 - [ ] `pnpm build` — no TypeScript errors
-  - `pnpm --filter @worang-cms/cms build` exits 0
-  - `pnpm --filter @worang-cms/server build` exits 0
-- [ ] Server starts without errors: `pnpm --filter @worang-cms/server dev`
+  - `[build command]` exits 0
+- [ ] Server starts without errors: `[dev command]`
 - [ ] Result summary written at `.sprints/{sprint}/results/block-NN-name.md`
 - [ ] Result summary committed on this branch (last commit)
 
@@ -32,7 +31,7 @@ Complete all of these before marking the block done:
 - [ ] `pnpm test` — all existing tests pass (note count before/after)
 - [ ] New tests added for all new code
 - [ ] `pnpm build` — no TypeScript errors
-- [ ] `pnpm --filter @worang-cms/server dev` — server starts without errors
+- [ ] `[dev command]` — server starts without errors
 - [ ] `GET /api/admin/authors` returns 200 with pagination envelope
 - [ ] `POST /api/admin/authors` creates author and returns 201
 - [ ] Author routes require `X-Site-Id` header (returns 400 without it)
