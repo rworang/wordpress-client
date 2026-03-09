@@ -21,8 +21,9 @@ import { toPost } from './adapters/post';
 import { toMedia } from './adapters/media';
 import { toCategory } from './adapters/category';
 import { extractPagination } from './utils/pagination';
-import { WordpressError, WordpressNotFoundError, WordpressAuthError } from './errors';
+import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors';
 import { dedup } from './utils/dedup';
+import { TTLCache } from './utils/cache';
 /**
  * Typed client for fetching posts, categories, and media from WordPress.
  *
@@ -38,12 +39,14 @@ export class WordpressClient {
     http;
     siteHttp;
     siteBaseURL;
+    cache;
+    inflight = new Map();
     /**
      * Creates a new WordPress client.
      *
      * @throws {Error} If baseURL is not provided
      */
-    constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, }) {
+    constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache, }) {
         if (!baseURL) {
             throw new Error('WordpressClient: baseURL is required');
         }
@@ -68,6 +71,7 @@ export class WordpressClient {
         });
         axiosRetry(this.siteHttp, retryConfig);
         this.siteHttp.interceptors.response.use((r) => r, errorInterceptor);
+        this.cache = cache === false ? null : new TTLCache(cache);
     }
     // ---- Posts ----
     /**
@@ -184,9 +188,22 @@ export class WordpressClient {
         }
     }
     // ---- Internal ----
+    /** Clear all cached responses. */
+    clearCache() {
+        this.cache?.clear();
+    }
     dedupGet(instance, url, params) {
         const key = `${url}:${JSON.stringify(params ?? {})}`;
-        return dedup(key, () => instance.get(url, params ? { params } : undefined));
+        if (this.cache) {
+            const cached = this.cache.get(key);
+            if (cached)
+                return cached;
+        }
+        return dedup(this.inflight, key, async () => {
+            const response = await instance.get(url, params ? { params } : undefined);
+            this.cache?.set(key, response);
+            return response;
+        });
     }
     // ---- Error Handling ----
     handleError(error) {
@@ -203,6 +220,13 @@ export class WordpressClient {
             }
             if (status === 401 || status === 403) {
                 throw new WordpressAuthError(message);
+            }
+            if (status === 400) {
+                const params = data?.data?.params;
+                const details = params
+                    ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]]))
+                    : undefined;
+                throw new WordpressValidationError(message, details);
             }
             throw new WordpressError(message, status, data?.code);
         }

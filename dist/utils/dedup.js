@@ -5,8 +5,7 @@
  * Returns the existing in-flight promise for a given key if one exists,
  * otherwise executes the factory function and caches the promise until it settles.
  */
-const inflight = new Map();
-export function dedup(key, fn) {
+export function dedup(inflight, key, fn) {
     const existing = inflight.get(key);
     if (existing)
         return existing;

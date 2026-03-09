@@ -4,6 +4,6 @@
  */
 
 export { toPost } from './post'
-export { toMedia, toMediaFromFeatured, hydrateMedia } from './media'
+export { toMedia, toMediaFromFeatured } from './media'
 export { toCategory } from './category'
 export { toAuthor } from './author'
