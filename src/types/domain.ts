@@ -68,6 +68,40 @@ export interface Post {
 }
 
 /**
+ * A WordPress page with embedded author and media.
+ *
+ * @example
+ * const page = await client.page('about')
+ * console.log(page?.title)
+ */
+export interface Page {
+  id: number;
+  /** URL-friendly identifier */
+  slug: string;
+  /** Page title (HTML entities decoded) */
+  title: string;
+  /** Full page content as HTML */
+  content: string;
+  /** Short excerpt as HTML */
+  excerpt: string;
+  author: Author;
+  /** Basic featured image info (use featuredMedia for full details) */
+  featuredImage: {
+    id: number | undefined;
+    url: string;
+    alt: string;
+  };
+  /** Full featured media with all size variants */
+  featuredMedia?: Media;
+  /** ISO 8601 publication date */
+  date: string;
+  /** Parent page ID (0 if top-level) */
+  parent: number;
+  /** Menu ordering value */
+  menuOrder: number;
+}
+
+/**
  * A WordPress media item (image, video, etc.) with responsive sizes.
  *
  * @example

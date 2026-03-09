@@ -18,10 +18,11 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
-import type { RawPost, RawMedia, RawCategory } from './types/raw'
-import type { Post, Media, Category } from './types/domain'
-import type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params'
+import type { RawPost, RawPage, RawMedia, RawCategory } from './types/raw'
+import type { Post, Page, Media, Category } from './types/domain'
+import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params'
 import { toPost } from './adapters/post'
+import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
 import { toCategory } from './adapters/category'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
@@ -168,6 +169,50 @@ export class WordpressClient {
       _embed: true,
     })
     return toPost(response.data)
+  }
+
+  // ---- Pages ----
+
+  /**
+   * Fetch a paginated list of pages.
+   *
+   * @example
+   * const { data: pages } = await client.pages({ parent: 0 })
+   */
+  async pages(params: PageQueryParams = {}): Promise<PaginatedResponse<Page>> {
+    const { page = 1, per_page = 10, ...rest } = params
+    const response = await this.dedupGet<RawPage[]>(this.http, '/pages', {
+      _embed: true, page, per_page, ...rest,
+    })
+    const paginated = extractPagination(response, page, per_page)
+    return { ...paginated, data: paginated.data.map(toPage) }
+  }
+
+  /**
+   * Fetch a single page by its URL slug.
+   *
+   * @returns The page, or null if not found
+   *
+   * @example
+   * const about = await client.page('about')
+   */
+  async page(slug: string): Promise<Page | null> {
+    const response = await this.dedupGet<RawPage[]>(this.http, '/pages', {
+      slug, _embed: true,
+    })
+    return response.data.length ? toPage(response.data[0]) : null
+  }
+
+  /**
+   * Fetch a single page by its numeric ID.
+   *
+   * @throws {WordpressNotFoundError} If the page doesn't exist
+   */
+  async pageById(id: number): Promise<Page> {
+    const response = await this.dedupGet<RawPage>(this.http, `/pages/${id}`, {
+      _embed: true,
+    })
+    return toPage(response.data)
   }
 
   // ---- Categories ----

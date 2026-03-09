@@ -17,6 +17,7 @@ export type { WordpressClientOptions } from './client'
 // Types
 export type {
   Post,
+  Page,
   Media,
   Category,
   Author,
@@ -24,6 +25,7 @@ export type {
 
 export type {
   PostQueryParams,
+  PageQueryParams,
   TaxonomyQueryParams,
   MediaQueryParams,
 } from './types/params'
@@ -41,4 +43,4 @@ export {
 } from './errors'
 
 // Adapters (for advanced use cases)
-export { toPost, toMedia, toCategory, toAuthor } from './adapters'
+export { toPost, toPage, toMedia, toCategory, toAuthor } from './adapters'
