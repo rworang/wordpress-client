@@ -37,4 +37,16 @@ export interface PaginatedResponse<T> {
  * Extracts pagination info from WordPress REST API response headers.
  */
 export declare function extractPagination<T>(response: AxiosResponse<T[]>, page?: number, perPage?: number): PaginatedResponse<T>;
+/**
+ * Fetches all items across all pages by repeatedly calling a paginated method.
+ *
+ * @param fn - A function that takes a page number and returns a paginated response
+ * @returns All items concatenated across all pages
+ *
+ * @example
+ * import { fetchAll } from '@worang/wordpress-client'
+ *
+ * const allPosts = await fetchAll((page) => client.posts({ page, per_page: 100 }))
+ */
+export declare function fetchAll<T>(fn: (page: number) => Promise<PaginatedResponse<T>>): Promise<T[]>;
 //# sourceMappingURL=pagination.d.ts.map

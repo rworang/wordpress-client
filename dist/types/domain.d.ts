@@ -31,6 +31,17 @@ export interface Category {
     /** Number of posts in this category */
     count?: number;
 }
+/** A WordPress tag for labeling posts. */
+export interface Tag {
+    id: number;
+    /** URL-friendly identifier (e.g., 'javascript') */
+    slug: string;
+    /** Display name (e.g., 'JavaScript') */
+    name: string;
+    description?: string;
+    /** Number of posts with this tag */
+    count?: number;
+}
 /**
  * A WordPress post with embedded author, categories, and media.
  *
@@ -64,6 +75,39 @@ export interface Post {
     sticky: boolean;
 }
 /**
+ * A WordPress page with embedded author and media.
+ *
+ * @example
+ * const page = await client.page('about')
+ * console.log(page?.title)
+ */
+export interface Page {
+    id: number;
+    /** URL-friendly identifier */
+    slug: string;
+    /** Page title (HTML entities decoded) */
+    title: string;
+    /** Full page content as HTML */
+    content: string;
+    /** Short excerpt as HTML */
+    excerpt: string;
+    author: Author;
+    /** Basic featured image info (use featuredMedia for full details) */
+    featuredImage: {
+        id: number | undefined;
+        url: string;
+        alt: string;
+    };
+    /** Full featured media with all size variants */
+    featuredMedia?: Media;
+    /** ISO 8601 publication date */
+    date: string;
+    /** Parent page ID (0 if top-level) */
+    parent: number;
+    /** Menu ordering value */
+    menuOrder: number;
+}
+/**
  * A WordPress media item (image, video, etc.) with responsive sizes.
  *
  * @example
@@ -89,5 +133,45 @@ export interface Media {
         mimeType: string;
         filesize?: number;
     }>;
+}
+/**
+ * A WordPress navigation menu item.
+ *
+ * Represents a single link in a navigation menu, with support for hierarchy.
+ * Requires WP 5.9+ with the Menus REST API.
+ */
+export interface MenuItem {
+    id: number;
+    /** Display label */
+    title: string;
+    /** Target URL */
+    url: string;
+    /** Menu this item belongs to */
+    menus: number;
+    /** Parent menu item ID (0 if top-level) */
+    parent: number;
+    /** Display order */
+    menuOrder: number;
+    /** Type of object this links to (e.g., 'post_type', 'custom', 'taxonomy') */
+    objectType: string;
+    /** Specific object (e.g., 'page', 'post', 'category') */
+    object: string;
+    /** The linked object's ID (0 for custom links) */
+    objectId: number;
+    /** Link target (e.g., '_blank') */
+    target: string;
+}
+/**
+ * A WordPress navigation menu (the container, not individual items).
+ *
+ * Requires WP 5.9+ with the Menus REST API.
+ */
+export interface NavigationMenu {
+    id: number;
+    /** Menu name */
+    name: string;
+    /** Menu slug */
+    slug: string;
+    description: string;
 }
 //# sourceMappingURL=domain.d.ts.map

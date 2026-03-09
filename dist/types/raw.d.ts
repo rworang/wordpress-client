@@ -56,6 +56,13 @@ export interface RawCategory {
     description?: string;
     count?: number;
 }
+export interface RawTag {
+    id: number;
+    slug: string;
+    name: string;
+    description?: string;
+    count?: number;
+}
 export interface RawAuthor {
     id: number;
     name: string;
@@ -81,5 +88,45 @@ export interface RawPost {
         'wp:term'?: RawCategory[][];
         author?: RawAuthor[];
     };
+}
+export interface RawPage {
+    id: number;
+    slug: string;
+    title: {
+        rendered: string;
+    };
+    content: {
+        rendered: string;
+    };
+    excerpt: {
+        rendered: string;
+    };
+    date: string;
+    parent: number;
+    menu_order: number;
+    _embedded?: {
+        'wp:featuredmedia'?: RawFeaturedMedia[];
+        author?: RawAuthor[];
+    };
+}
+export interface RawMenuItem {
+    id: number;
+    title: {
+        rendered: string;
+    };
+    url: string;
+    menus: number;
+    parent: number;
+    menu_order: number;
+    type: string;
+    object: string;
+    object_id: number;
+    target: string;
+}
+export interface RawNavigationMenu {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
 }
 //# sourceMappingURL=raw.d.ts.map

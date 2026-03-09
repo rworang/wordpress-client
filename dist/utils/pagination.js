@@ -27,4 +27,25 @@ export function extractPagination(response, page = 1, perPage = 10) {
         },
     };
 }
+/**
+ * Fetches all items across all pages by repeatedly calling a paginated method.
+ *
+ * @param fn - A function that takes a page number and returns a paginated response
+ * @returns All items concatenated across all pages
+ *
+ * @example
+ * import { fetchAll } from '@worang/wordpress-client'
+ *
+ * const allPosts = await fetchAll((page) => client.posts({ page, per_page: 100 }))
+ */
+export async function fetchAll(fn) {
+    const first = await fn(1);
+    const items = [...first.data];
+    const { totalPages } = first.pagination;
+    for (let page = 2; page <= totalPages; page++) {
+        const result = await fn(page);
+        items.push(...result.data);
+    }
+    return items;
+}
 //# sourceMappingURL=pagination.js.map
