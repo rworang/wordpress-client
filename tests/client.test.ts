@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { server } from './server'
 import { WordpressClient } from '../src/client'
 import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
+import { fetchAll } from '../src/utils/pagination'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -306,6 +307,53 @@ describe('WordpressClient', () => {
       const result = await client.posts()
       expect(result.pagination.total).toBe(0)
       expect(result.pagination.totalPages).toBe(1)
+    })
+  })
+
+  describe('fetchAll', () => {
+    it('fetches all items across multiple pages', async () => {
+      const post1 = { id: 1, slug: 'post-1', title: { rendered: 'Post 1' }, content: { rendered: '' }, excerpt: { rendered: '' }, date: '2024-01-01T00:00:00', sticky: false }
+      const post2 = { id: 2, slug: 'post-2', title: { rendered: 'Post 2' }, content: { rendered: '' }, excerpt: { rendered: '' }, date: '2024-01-02T00:00:00', sticky: false }
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          const url = new URL(request.url)
+          const page = url.searchParams.get('page')
+
+          if (page === '1') {
+            return HttpResponse.json([post1], {
+              headers: { 'x-wp-total': '2', 'x-wp-totalpages': '2' },
+            })
+          }
+          return HttpResponse.json([post2], {
+            headers: { 'x-wp-total': '2', 'x-wp-totalpages': '2' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      const allPosts = await fetchAll((page) => client.posts({ page, per_page: 1 }))
+      expect(allPosts).toHaveLength(2)
+      expect(allPosts[0].slug).toBe('post-1')
+      expect(allPosts[1].slug).toBe('post-2')
+    })
+
+    it('handles single-page results', async () => {
+      const client = createClient()
+      const allPosts = await fetchAll((page) => client.posts({ page }))
+      expect(allPosts).toHaveLength(1)
+    })
+  })
+
+  describe('abort signal', () => {
+    it('aborts a request when signal is triggered', async () => {
+      const controller = new AbortController()
+      controller.abort()
+
+      const client = createClient()
+      await expect(
+        client.posts({}, { signal: controller.signal }),
+      ).rejects.toThrow()
     })
   })
 
