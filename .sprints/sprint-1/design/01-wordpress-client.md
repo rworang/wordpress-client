@@ -8,13 +8,13 @@
 
 ## 1. Boundaries
 
-| Boundary | Left side | Right side |
-|----------|-----------|------------|
-| Transport ↔ Domain | `src/client.ts` (HTTP, retry, cache, dedup) | `src/types/`, `src/adapters/` |
-| Raw API ↔ Domain types | `src/schemas/` (Zod validation) | `src/adapters/` (transformation) |
-| Adapters ↔ Public API | `src/adapters/index.ts` (internal barrel) | `src/index.ts` (public barrel) |
-| Utility ↔ Client | `src/utils/` (stateless helpers) | `src/client.ts` (stateful, passes context in) |
-| Package ↔ Consumer | `src/index.ts` | caller code |
+| Boundary               | Left side                                   | Right side                                    |
+| ---------------------- | ------------------------------------------- | --------------------------------------------- |
+| Transport ↔ Domain     | `src/client.ts` (HTTP, retry, cache, dedup) | `src/types/`, `src/adapters/`                 |
+| Raw API ↔ Domain types | `src/schemas/` (Zod validation)             | `src/adapters/` (transformation)              |
+| Adapters ↔ Public API  | `src/adapters/index.ts` (internal barrel)   | `src/index.ts` (public barrel)                |
+| Utility ↔ Client       | `src/utils/` (stateless helpers)            | `src/client.ts` (stateful, passes context in) |
+| Package ↔ Consumer     | `src/index.ts`                              | caller code                                   |
 
 The critical constraint: **`src/utils/` and `src/schemas/` and `src/adapters/` must not depend on `src/client.ts`**. The client is the composition root; nothing flows back into it from below.
 
@@ -64,7 +64,7 @@ src/
 │   ├── category.ts       # toCategory()
 │   ├── tag.ts            # toTag()                          [NEW — Block 2]
 │   ├── author.ts         # toAuthor()
-│   └── navigation.ts     # toNavigation()                   [NEW — Block 4]
+│   └── navigation.ts     # toMenuItem(), toNavigationMenu()  [NEW — Block 4]
 ├── schemas/
 │   ├── index.ts          # schema barrel
 │   ├── post.ts           # RawPostSchema
@@ -97,13 +97,13 @@ src/
 ```typescript
 // WordpressAuthError: pass actual status, not hardcoded 401
 class WordpressAuthError extends WordpressError {
-  constructor(status: number, message: string)
-  // status is now the real HTTP status (401 OR 403)
+	constructor(status: number, message: string)
+	// status is now the real HTTP status (401 OR 403)
 }
 
 // WordpressValidationError: thrown on HTTP 400 (was defined but never thrown)
 class WordpressValidationError extends WordpressError {
-  // no interface change — just ensure handleError() throws it on status === 400
+	// no interface change — just ensure handleError() throws it on status === 400
 }
 ```
 
@@ -118,9 +118,9 @@ Dedup must no longer own a module-level map. The client passes its own map in.
 
 // After (fixed):
 export function deduplicate<T>(
-  key: string,
-  inflight: Map<string, Promise<unknown>>,
-  fn: () => Promise<T>
+	key: string,
+	inflight: Map<string, Promise<unknown>>,
+	fn: () => Promise<T>,
 ): Promise<T>
 ```
 
@@ -128,13 +128,13 @@ export function deduplicate<T>(
 
 ```typescript
 class WordpressClient {
-  private readonly inflight: Map<string, Promise<unknown>>
+	private readonly inflight: Map<string, Promise<unknown>>
 
-  constructor(config: WordpressClientOptions) {
-    this.inflight = new Map()
-    // ... rest of init
-  }
-  // all calls to deduplicate() pass this.inflight
+	constructor(config: WordpressClientOptions) {
+		this.inflight = new Map()
+		// ... rest of init
+	}
+	// all calls to deduplicate() pass this.inflight
 }
 ```
 
@@ -142,18 +142,18 @@ class WordpressClient {
 
 ```typescript
 interface Page {
-  id: number
-  slug: string
-  title: string           // HTML entities decoded
-  content: string         // rendered HTML
-  excerpt: string         // rendered HTML
-  date: string            // ISO 8601
-  modified: string        // ISO 8601
-  status: string          // 'publish' | 'draft' | 'private' | ...
-  parent: number          // 0 = top-level page; >0 = child page (ID of parent)
-  menuOrder: number       // for manual ordering
-  featuredMediaId: number | null
-  featuredMedia?: Media
+	id: number
+	slug: string
+	title: string // HTML entities decoded
+	content: string // rendered HTML
+	excerpt: string // rendered HTML
+	date: string // ISO 8601
+	modified: string // ISO 8601
+	status: string // 'publish' | 'draft' | 'private' | ...
+	parent: number // 0 = top-level page; >0 = child page (ID of parent)
+	menuOrder: number // for manual ordering
+	featuredMediaId: number | null
+	featuredMedia?: Media
 }
 ```
 
@@ -164,14 +164,14 @@ Note: `Page` does NOT have `sticky`, `categories`, or `author` embedded (pages u
 
 ```typescript
 interface PageQueryParams {
-  page?: number
-  perPage?: number
-  search?: string
-  slug?: string
-  parent?: number           // filter by parent page ID (0 = top-level only)
-  orderBy?: 'id' | 'date' | 'modified' | 'title' | 'menu_order'
-  order?: 'asc' | 'desc'
-  status?: string
+	page?: number
+	perPage?: number
+	search?: string
+	slug?: string
+	parent?: number // filter by parent page ID (0 = top-level only)
+	orderBy?: "id" | "date" | "modified" | "title" | "menu_order"
+	order?: "asc" | "desc"
+	status?: string
 }
 ```
 
@@ -179,9 +179,9 @@ interface PageQueryParams {
 
 ```typescript
 class WordpressClient {
-  page(slug: string): Promise<Page | null>
-  pageById(id: number): Promise<Page | null>
-  pages(params?: PageQueryParams): Promise<PaginatedResponse<Page>>
+	page(slug: string): Promise<Page | null>
+	pageById(id: number): Promise<Page | null>
+	pages(params?: PageQueryParams): Promise<PaginatedResponse<Page>>
 }
 ```
 
@@ -189,12 +189,12 @@ class WordpressClient {
 
 ```typescript
 interface Tag {
-  id: number
-  slug: string
-  name: string
-  description?: string
-  count?: number
-  // tags are FLAT — no parent field (unlike Category)
+	id: number
+	slug: string
+	name: string
+	description?: string
+	count?: number
+	// tags are FLAT — no parent field (unlike Category)
 }
 ```
 
@@ -202,12 +202,12 @@ Note: `Category` must gain a `parent` field (currently absent, per gap analysis)
 
 ```typescript
 interface Category {
-  id: number
-  slug: string
-  name: string
-  description?: string
-  count?: number
-  parent: number          // ADD: 0 = top-level; ID = child category
+	id: number
+	slug: string
+	name: string
+	description?: string
+	count?: number
+	parent: number // ADD: 0 = top-level; ID = child category
 }
 ```
 
@@ -216,24 +216,24 @@ interface Category {
 ```typescript
 // Additions to PostQueryParams:
 interface PostQueryParams {
-  // ... existing fields ...
-  modifiedBefore?: string   // ISO 8601 — maps to modified_before
-  modifiedAfter?: string    // ISO 8601 — maps to modified_after
+	// ... existing fields ...
+	modifiedBefore?: string // ISO 8601 — maps to modified_before
+	modifiedAfter?: string // ISO 8601 — maps to modified_after
 }
 
 // Additions to TaxonomyQueryParams (applies to both categories and tags):
 interface TaxonomyQueryParams {
-  // ... existing fields ...
-  include?: number[]        // only return these IDs
-  exclude?: number[]        // exclude these IDs
-  parent?: number           // categories only (hierarchical); tags ignore this
+	// ... existing fields ...
+	include?: number[] // only return these IDs
+	exclude?: number[] // exclude these IDs
+	parent?: number // categories only (hierarchical); tags ignore this
 }
 
 // Additions to MediaQueryParams:
 interface MediaQueryParams {
-  // ... existing fields ...
-  author?: number           // filter by author ID
-  parent?: number           // filter by parent post/page ID
+	// ... existing fields ...
+	author?: number // filter by author ID
+	parent?: number // filter by parent post/page ID
 }
 ```
 
@@ -241,9 +241,9 @@ interface MediaQueryParams {
 
 ```typescript
 class WordpressClient {
-  tags(params?: TaxonomyQueryParams): Promise<PaginatedResponse<Tag>>
-  tag(slug: string): Promise<Tag | null>
-  tagById(id: number): Promise<Tag | null>
+	tags(params?: TaxonomyQueryParams): Promise<PaginatedResponse<Tag>>
+	tag(slug: string): Promise<Tag | null>
+	tagById(id: number): Promise<Tag | null>
 }
 ```
 
@@ -251,14 +251,14 @@ class WordpressClient {
 
 ```typescript
 class WordpressClient {
-  fetchCustom<T>(
-    endpoint: string,                 // e.g. 'wp/v2/portfolio' or full path
-    params?: Record<string, unknown>, // forwarded as query params
-    schema?: z.ZodType<T>             // optional — caller-supplied Zod validation
-  ): Promise<PaginatedResponse<T>>
-  // Returns PaginatedResponse<T> using existing extractPagination()
-  // If schema provided: validate each item; throw WordpressSchemaError on failure
-  // If schema omitted: data is typed as T with no runtime validation (caller responsibility)
+	fetchCustom<T>(
+		endpoint: string, // e.g. 'wp/v2/portfolio' or full path
+		params?: Record<string, unknown>, // forwarded as query params
+		schema?: z.ZodType<T>, // optional — caller-supplied Zod validation
+	): Promise<PaginatedResponse<T>>
+	// Returns PaginatedResponse<T> using existing extractPagination()
+	// If schema provided: validate each item; throw WordpressSchemaError on failure
+	// If schema omitted: data is typed as T with no runtime validation (caller responsibility)
 }
 ```
 
@@ -266,32 +266,34 @@ class WordpressClient {
 
 ```typescript
 interface MenuItem {
-  id: number
-  title: string
-  url: string
-  target: '_blank' | ''
-  order: number
-  parent: number          // 0 = top-level; >0 = child item (ID of parent MenuItem)
-  children: MenuItem[]
+	id: number
+	title: string
+	url: string
+	menus: number
+	parent: number          // 0 = top-level; >0 = child item (ID of parent)
+	menuOrder: number
+	objectType: string      // e.g. 'post_type', 'custom', 'taxonomy'
+	object: string          // e.g. 'page', 'post', 'category'
+	objectId: number        // 0 for custom links
+	target: string          // e.g. '_blank'
 }
 
 interface NavigationMenu {
-  id: number
-  slug: string
-  title: string
-  items: MenuItem[]
+	id: number
+	name: string
+	slug: string
+	description: string
 }
 ```
 
-Note: This targets WP 6.3+ `wp/v2/navigation`. For sites on older WP, callers use
-`fetchCustom()` against a navigation plugin endpoint. The client does not handle legacy menus.
+Note: This targets WP 5.9+ with the Menus REST API (`wp/v2/menus`, `wp/v2/menu-items`).
 
 ### Block 4 — Client methods
 
 ```typescript
 class WordpressClient {
-  navigationMenus(): Promise<NavigationMenu[]>
-  navigationMenu(slug: string): Promise<NavigationMenu | null>
+	menus(options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>>
+	menuItems(params?: MenuItemQueryParams, options?: RequestOptions): Promise<PaginatedResponse<MenuItem>>
 }
 ```
 
@@ -300,7 +302,7 @@ class WordpressClient {
 ```typescript
 // Added to existing pagination.ts
 async function fetchAll<T>(
-  fn: (page: number) => Promise<PaginatedResponse<T>>
+	fn: (page: number) => Promise<PaginatedResponse<T>>,
 ): Promise<T[]>
 // Calls fn(1), reads totalPages, calls fn(2)...fn(n) in parallel, concatenates data[]
 // Caller is responsible for not calling this on endpoints with unbounded result sets
@@ -311,7 +313,7 @@ async function fetchAll<T>(
 ```typescript
 // Per-request abort via optional last argument on all methods:
 interface RequestOptions {
-  signal?: AbortSignal
+	signal?: AbortSignal
 }
 
 // Design decision on dedup + abort interaction:
@@ -347,7 +349,7 @@ HTTP response
   ├── status 401 → throw WordpressAuthError(401)    [Block 0 fix]
   ├── status 403 → throw WordpressAuthError(403)    [Block 0 fix]
   ├── status 404 → return null (single-item methods)
-  ├── status 5xx → let retry exhaust, then throw WordpressNetworkError
+  ├── status 5xx → let retry exhaust, then throw WordpressError
   └── status 2xx → continue
   │
   ▼
@@ -371,15 +373,15 @@ Cache store → return to consumer
 
 ## 5. Dependency Map
 
-| Module | Depends on | Must NOT depend on |
-|--------|------------|--------------------|
-| `src/types/` | nothing | everything else |
-| `src/schemas/` | `zod` (external) | `src/client.ts`, `src/utils/`, `src/adapters/` |
-| `src/errors.ts` | nothing | everything else |
-| `src/utils/` | `src/types/` (pagination only) | `src/client.ts`, `src/adapters/`, `src/schemas/` |
-| `src/adapters/` | `src/types/`, `src/schemas/`, `src/errors.ts` | `src/client.ts`, `src/utils/` |
-| `src/client.ts` | all of above + `axios` | nothing below this level |
-| `src/index.ts` | `src/client.ts`, `src/types/`, `src/errors.ts` | `src/adapters/`, `src/schemas/` (internal — do not re-export) |
+| Module          | Depends on                                     | Must NOT depend on                                            |
+| --------------- | ---------------------------------------------- | ------------------------------------------------------------- |
+| `src/types/`    | nothing                                        | everything else                                               |
+| `src/schemas/`  | `zod` (external)                               | `src/client.ts`, `src/utils/`, `src/adapters/`                |
+| `src/errors.ts` | nothing                                        | everything else                                               |
+| `src/utils/`    | `src/types/` (pagination only)                 | `src/client.ts`, `src/adapters/`, `src/schemas/`              |
+| `src/adapters/` | `src/types/`, `src/schemas/`, `src/errors.ts`  | `src/client.ts`, `src/utils/`                                 |
+| `src/client.ts` | all of above + `axios`                         | nothing below this level                                      |
+| `src/index.ts`  | `src/client.ts`, `src/types/`, `src/errors.ts` | `src/adapters/`, `src/schemas/` (internal — do not re-export) |
 
 `src/adapters/index.ts` is an **internal** barrel. It must NOT be re-exported from `src/index.ts`.
 Consumers import domain types from `@worang/wordpress-client`, not adapter functions.
@@ -392,33 +394,43 @@ After Blocks 0–5, `src/index.ts` exports:
 
 ```typescript
 // Client
-export { WordpressClient } from './client'
-export type { WordpressClientOptions } from './client'
+export { WordpressClient } from "./client"
+export type { WordpressClientOptions, RequestOptions } from "./client"
 
 // Domain types
-export type { Post, Page, Tag, Category, Author, Media, NavigationMenu, MenuItem } from './types/domain'
+export type {
+	Post,
+	Page,
+	Tag,
+	Category,
+	Author,
+	Media,
+	NavigationMenu,
+	MenuItem,
+} from "./types/domain"
 
 // Params
 export type {
-  PostQueryParams,
-  PageQueryParams,
-  TaxonomyQueryParams,
-  MediaQueryParams,
-} from './types/params'
+	PostQueryParams,
+	PageQueryParams,
+	TaxonomyQueryParams,
+	MediaQueryParams,
+	MenuItemQueryParams,
+} from "./types/params"
 
-// Pagination
-export type { PaginatedResponse } from './utils/pagination'
-export { fetchAll } from './utils/pagination'
+// Pagination + Cache
+export type { PaginatedResponse } from "./utils/pagination"
+export { fetchAll } from "./utils/pagination"
+export type { CacheOptions } from "./utils/cache"
 
 // Errors
 export {
-  WordpressError,
-  WordpressNetworkError,
-  WordpressAuthError,
-  WordpressNotFoundError,
-  WordpressValidationError,
-  WordpressSchemaError,
-} from './errors'
+	WordpressError,
+	WordpressNotFoundError,
+	WordpressAuthError,
+	WordpressValidationError,
+	WordpressSchemaError,
+} from "./errors"
 ```
 
 NOT exported: adapter functions, schema objects, raw types, internal utilities (cache, dedup).
