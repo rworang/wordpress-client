@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { rawPost, rawMedia, rawCategory } from './fixtures/raw'
+import { rawPost, rawPage, rawMedia, rawCategory } from './fixtures/raw'
 
 const BASE = 'https://test.wp.com/wp-json'
 
@@ -33,6 +33,37 @@ export const handlers = [
       )
     }
     return HttpResponse.json(rawPost)
+  }),
+
+  // Pages list
+  http.get(`${BASE}/wp/v2/pages`, ({ request }) => {
+    const url = new URL(request.url)
+    const slug = url.searchParams.get('slug')
+
+    if (slug === 'not-found') {
+      return HttpResponse.json([])
+    }
+
+    if (slug) {
+      return HttpResponse.json([rawPage], {
+        headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+      })
+    }
+
+    return HttpResponse.json([rawPage], {
+      headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+    })
+  }),
+
+  // Single page by ID
+  http.get(`${BASE}/wp/v2/pages/:id`, ({ params }) => {
+    if (params.id === '999') {
+      return HttpResponse.json(
+        { code: 'rest_post_invalid_id', message: 'Invalid page ID.' },
+        { status: 404 },
+      )
+    }
+    return HttpResponse.json(rawPage)
   }),
 
   // Categories list
