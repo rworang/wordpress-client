@@ -304,6 +304,34 @@ export class WordpressClient {
   // ---- Custom Endpoints ----
 
   /**
+   * Fetch a paginated list from any WordPress REST API endpoint.
+   * Use this for custom post types or plugin endpoints not covered
+   * by the built-in methods.
+   *
+   * @param endpoint - The REST API path (e.g., '/products', '/events')
+   * @param params - Optional query parameters
+   * @returns Raw paginated response — caller is responsible for typing T as the item type
+   *
+   * @example
+   * // Fetch WooCommerce products
+   * interface Product { id: number; name: string; price: string }
+   * const { data, pagination } = await client.fetchCustom<Product>('/products')
+   *
+   * @example
+   * // With query parameters
+   * const { data } = await client.fetchCustom<Event>('/events', { per_page: 5 })
+   */
+  async fetchCustom<T>(
+    endpoint: string,
+    params?: Record<string, unknown>,
+  ): Promise<PaginatedResponse<T>> {
+    const response = await this.dedupGet<T[]>(this.http, endpoint, params)
+    const page = (params?.page as number) ?? 1
+    const perPage = (params?.per_page as number) ?? 10
+    return extractPagination(response, page, perPage)
+  }
+
+  /**
    * Fetch the cache version from a custom WordPress endpoint.
    * Uses the `worang/v1` namespace, not the default `wp/v2`.
    *
