@@ -12,7 +12,7 @@
 
 // Client
 export { WordpressClient } from './client'
-export type { WordpressClientOptions } from './client'
+export type { WordpressClientOptions, RequestOptions } from './client'
 
 // Types
 export type {
@@ -35,6 +35,7 @@ export type {
 } from './types/params'
 
 export type { PaginatedResponse } from './utils/pagination'
+export { fetchAll } from './utils/pagination'
 export type { CacheOptions } from './utils/cache'
 
 // Errors
