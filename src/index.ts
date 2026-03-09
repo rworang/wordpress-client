@@ -20,6 +20,7 @@ export type {
   Page,
   Media,
   Category,
+  Tag,
   Author,
 } from './types/domain'
 
@@ -43,4 +44,4 @@ export {
 } from './errors'
 
 // Adapters (for advanced use cases)
-export { toPost, toPage, toMedia, toCategory, toAuthor } from './adapters'
+export { toPost, toPage, toMedia, toCategory, toTag, toAuthor } from './adapters'
