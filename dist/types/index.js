@@ -1,5 +1,4 @@
-/** Re-exports all type definitions. */
-export * from './raw';
+/** Re-exports public type definitions. */
 export * from './domain';
 export * from './params';
 //# sourceMappingURL=index.js.map
