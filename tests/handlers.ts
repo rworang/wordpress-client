@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { rawPost, rawPage, rawMedia, rawCategory, rawTag } from './fixtures/raw'
+import { rawPost, rawPage, rawMedia, rawCategory, rawTag, rawNavigationMenu, rawMenuItem } from './fixtures/raw'
 
 const BASE = 'https://test.wp.com/wp-json'
 
@@ -108,6 +108,20 @@ export const handlers = [
   // Media list
   http.get(`${BASE}/wp/v2/media`, () => {
     return HttpResponse.json([rawMedia], {
+      headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+    })
+  }),
+
+  // Navigation menus
+  http.get(`${BASE}/wp/v2/menus`, () => {
+    return HttpResponse.json([rawNavigationMenu], {
+      headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+    })
+  }),
+
+  // Menu items
+  http.get(`${BASE}/wp/v2/menu-items`, () => {
+    return HttpResponse.json([rawMenuItem], {
       headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
     })
   }),

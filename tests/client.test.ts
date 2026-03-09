@@ -156,6 +156,35 @@ describe('WordpressClient', () => {
     })
   })
 
+  describe('navigation', () => {
+    it('fetches navigation menus', async () => {
+      const client = createClient()
+      const result = await client.menus()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].name).toBe('Main Menu')
+      expect(result.data[0].slug).toBe('main-menu')
+    })
+
+    it('fetches menu items', async () => {
+      const client = createClient()
+      const result = await client.menuItems()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].title).toBe('About')
+      expect(result.data[0].url).toBe('https://example.com/about')
+    })
+
+    it('maps menu item fields correctly', async () => {
+      const client = createClient()
+      const result = await client.menuItems()
+      const item = result.data[0]
+      expect(item.parent).toBe(0)
+      expect(item.menuOrder).toBe(1)
+      expect(item.objectType).toBe('post_type')
+      expect(item.object).toBe('page')
+      expect(item.objectId).toBe(2)
+    })
+  })
+
   describe('fetchCustom', () => {
     it('fetches data from a custom endpoint', async () => {
       server.use(

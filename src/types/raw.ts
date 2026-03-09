@@ -7,102 +7,122 @@
  */
 
 export interface RawMedia {
-  id: number;
-  guid: { rendered: string };
-  type: string;
-  description: { rendered: string };
-  media_type: string;
-  mime_type: string;
+  id: number
+  guid: { rendered: string }
+  type: string
+  description: { rendered: string }
+  media_type: string
+  mime_type: string
   media_details: {
-    width: number;
-    height: number;
-    filesize: number;
+    width: number
+    height: number
+    filesize: number
     sizes: Record<
       string,
       {
-        file: string;
-        width: number;
-        height: number;
-        filesize: number;
-        mime_type: string;
-        source_url: string;
+        file: string
+        width: number
+        height: number
+        filesize: number
+        mime_type: string
+        source_url: string
       }
-    >;
-  };
+    >
+  }
 }
 
 export interface RawFeaturedMedia {
-  id: number;
-  source_url: string;
-  alt_text: string;
-  mime_type?: string;
+  id: number
+  source_url: string
+  alt_text: string
+  mime_type?: string
   media_details?: {
-    width: number;
-    height: number;
-    filesize?: number;
+    width: number
+    height: number
+    filesize?: number
     sizes: Record<
       string,
       {
-        file: string;
-        width: number;
-        height: number;
-        filesize?: number;
-        mime_type: string;
-        source_url: string;
+        file: string
+        width: number
+        height: number
+        filesize?: number
+        mime_type: string
+        source_url: string
       }
-    >;
-  };
+    >
+  }
 }
 
 export interface RawCategory {
-  id: number;
-  slug: string;
-  name: string;
-  description?: string;
-  count?: number;
+  id: number
+  slug: string
+  name: string
+  description?: string
+  count?: number
 }
 
 export interface RawTag {
-  id: number;
-  slug: string;
-  name: string;
-  description?: string;
-  count?: number;
+  id: number
+  slug: string
+  name: string
+  description?: string
+  count?: number
 }
 
 export interface RawAuthor {
-  id: number;
-  name: string;
-  url: string;
-  description: string;
+  id: number
+  name: string
+  url: string
+  description: string
 }
 
 export interface RawPost {
-  id: number;
-  slug: string;
-  title: { rendered: string };
-  content: { rendered: string };
-  excerpt: { rendered: string };
-  date: string;
-  sticky: boolean;
+  id: number
+  slug: string
+  title: { rendered: string }
+  content: { rendered: string }
+  excerpt: { rendered: string }
+  date: string
+  sticky: boolean
   _embedded?: {
-    'wp:featuredmedia'?: RawFeaturedMedia[];
-    'wp:term'?: RawCategory[][];
-    author?: RawAuthor[];
-  };
+    'wp:featuredmedia'?: RawFeaturedMedia[]
+    'wp:term'?: RawCategory[][]
+    author?: RawAuthor[]
+  }
 }
 
 export interface RawPage {
-  id: number;
-  slug: string;
-  title: { rendered: string };
-  content: { rendered: string };
-  excerpt: { rendered: string };
-  date: string;
-  parent: number;
-  menu_order: number;
+  id: number
+  slug: string
+  title: { rendered: string }
+  content: { rendered: string }
+  excerpt: { rendered: string }
+  date: string
+  parent: number
+  menu_order: number
   _embedded?: {
-    'wp:featuredmedia'?: RawFeaturedMedia[];
-    author?: RawAuthor[];
-  };
+    'wp:featuredmedia'?: RawFeaturedMedia[]
+    author?: RawAuthor[]
+  }
+}
+
+export interface RawMenuItem {
+  id: number
+  title: { rendered: string }
+  url: string
+  menus: number
+  parent: number
+  menu_order: number
+  type: string
+  object: string
+  object_id: number
+  target: string
+}
+
+export interface RawNavigationMenu {
+  id: number
+  name: string
+  slug: string
+  description: string
 }
