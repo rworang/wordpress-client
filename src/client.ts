@@ -57,6 +57,12 @@ export interface WordpressClientOptions {
   cache?: CacheOptions | false
 }
 
+/** Options for individual requests. */
+export interface RequestOptions {
+  /** AbortSignal for cancelling the request */
+  signal?: AbortSignal
+}
+
 /**
  * Typed client for fetching posts, categories, and media from WordPress.
  *
@@ -134,11 +140,11 @@ export class WordpressClient {
    * // Filter by category
    * const { data: posts } = await client.posts({ categories: [5] })
    */
-  async posts(params: PostQueryParams = {}): Promise<PaginatedResponse<Post>> {
+  async posts(params: PostQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Post>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawPost[]>(this.http, '/posts', {
       _embed: true, page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toPost) }
   }
@@ -154,10 +160,10 @@ export class WordpressClient {
    *   console.log(post.title)
    * }
    */
-  async post(slug: string): Promise<Post | null> {
+  async post(slug: string, options?: RequestOptions): Promise<Post | null> {
     const response = await this.dedupGet<RawPost[]>(this.http, '/posts', {
       slug, _embed: true,
-    })
+    }, options?.signal)
     return response.data.length ? toPost(response.data[0]) : null
   }
 
@@ -166,10 +172,10 @@ export class WordpressClient {
    *
    * @throws {WordpressNotFoundError} If the post doesn't exist
    */
-  async postById(id: number): Promise<Post> {
+  async postById(id: number, options?: RequestOptions): Promise<Post> {
     const response = await this.dedupGet<RawPost>(this.http, `/posts/${id}`, {
       _embed: true,
-    })
+    }, options?.signal)
     return toPost(response.data)
   }
 
@@ -181,11 +187,11 @@ export class WordpressClient {
    * @example
    * const { data: pages } = await client.pages({ parent: 0 })
    */
-  async pages(params: PageQueryParams = {}): Promise<PaginatedResponse<Page>> {
+  async pages(params: PageQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Page>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawPage[]>(this.http, '/pages', {
       _embed: true, page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toPage) }
   }
@@ -198,10 +204,10 @@ export class WordpressClient {
    * @example
    * const about = await client.page('about')
    */
-  async page(slug: string): Promise<Page | null> {
+  async page(slug: string, options?: RequestOptions): Promise<Page | null> {
     const response = await this.dedupGet<RawPage[]>(this.http, '/pages', {
       slug, _embed: true,
-    })
+    }, options?.signal)
     return response.data.length ? toPage(response.data[0]) : null
   }
 
@@ -210,10 +216,10 @@ export class WordpressClient {
    *
    * @throws {WordpressNotFoundError} If the page doesn't exist
    */
-  async pageById(id: number): Promise<Page> {
+  async pageById(id: number, options?: RequestOptions): Promise<Page> {
     const response = await this.dedupGet<RawPage>(this.http, `/pages/${id}`, {
       _embed: true,
-    })
+    }, options?.signal)
     return toPage(response.data)
   }
 
@@ -225,11 +231,11 @@ export class WordpressClient {
    * @example
    * const { data: categories } = await client.categories({ hide_empty: true })
    */
-  async categories(params: TaxonomyQueryParams = {}): Promise<PaginatedResponse<Category>> {
+  async categories(params: TaxonomyQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Category>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawCategory[]>(this.http, '/categories', {
       page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toCategory) }
   }
@@ -239,10 +245,10 @@ export class WordpressClient {
    *
    * @returns The category, or null if not found
    */
-  async category(slug: string): Promise<Category | null> {
+  async category(slug: string, options?: RequestOptions): Promise<Category | null> {
     const response = await this.dedupGet<RawCategory[]>(this.http, '/categories', {
       slug,
-    })
+    }, options?.signal)
     return response.data.length ? toCategory(response.data[0]) : null
   }
 
@@ -254,11 +260,11 @@ export class WordpressClient {
    * @example
    * const { data: tags } = await client.tags({ hide_empty: true })
    */
-  async tags(params: TaxonomyQueryParams = {}): Promise<PaginatedResponse<Tag>> {
+  async tags(params: TaxonomyQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Tag>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawTag[]>(this.http, '/tags', {
       page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toTag) }
   }
@@ -268,10 +274,10 @@ export class WordpressClient {
    *
    * @returns The tag, or null if not found
    */
-  async tag(slug: string): Promise<Tag | null> {
+  async tag(slug: string, options?: RequestOptions): Promise<Tag | null> {
     const response = await this.dedupGet<RawTag[]>(this.http, '/tags', {
       slug,
-    })
+    }, options?.signal)
     return response.data.length ? toTag(response.data[0]) : null
   }
 
@@ -282,8 +288,8 @@ export class WordpressClient {
    *
    * @throws {WordpressNotFoundError} If the media doesn't exist
    */
-  async media(id: number): Promise<Media> {
-    const response = await this.dedupGet<RawMedia>(this.http, `/media/${id}`)
+  async media(id: number, options?: RequestOptions): Promise<Media> {
+    const response = await this.dedupGet<RawMedia>(this.http, `/media/${id}`, undefined, options?.signal)
     return toMedia(response.data)
   }
 
@@ -293,11 +299,11 @@ export class WordpressClient {
    * @example
    * const { data: images } = await client.mediaList({ media_type: 'image' })
    */
-  async mediaList(params: MediaQueryParams = {}): Promise<PaginatedResponse<Media>> {
+  async mediaList(params: MediaQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Media>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawMedia[]>(this.http, '/media', {
       page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toMedia) }
   }
@@ -327,11 +333,11 @@ export class WordpressClient {
    * // Get all items from menu ID 3
    * const { data: items } = await client.menuItems({ menus: 3 })
    */
-  async menuItems(params: MenuItemQueryParams = {}): Promise<PaginatedResponse<MenuItem>> {
+  async menuItems(params: MenuItemQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<MenuItem>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawMenuItem[]>(this.http, '/menu-items', {
       page, per_page, ...rest,
-    })
+    }, options?.signal)
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toMenuItem) }
   }
@@ -359,8 +365,9 @@ export class WordpressClient {
   async fetchCustom<T>(
     endpoint: string,
     params?: Record<string, unknown>,
+    options?: RequestOptions,
   ): Promise<PaginatedResponse<T>> {
-    const response = await this.dedupGet<T[]>(this.http, endpoint, params)
+    const response = await this.dedupGet<T[]>(this.http, endpoint, params, options?.signal)
     const page = (params?.page as number) ?? 1
     const perPage = (params?.per_page as number) ?? 10
     return extractPagination(response, page, perPage)
@@ -390,7 +397,7 @@ export class WordpressClient {
     this.cache?.clear()
   }
 
-  private dedupGet<T>(instance: AxiosInstance, url: string, params?: Record<string, unknown>) {
+  private dedupGet<T>(instance: AxiosInstance, url: string, params?: Record<string, unknown>, signal?: AbortSignal) {
     const key = `${url}:${JSON.stringify(params ?? {})}`
 
     if (this.cache) {
@@ -399,7 +406,10 @@ export class WordpressClient {
     }
 
     return dedup(this.inflight, key, async () => {
-      const response = await instance.get<T>(url, params ? { params } : undefined)
+      const response = await instance.get<T>(url, {
+        ...(params ? { params } : {}),
+        ...(signal ? { signal } : {}),
+      })
       this.cache?.set(key, response)
       return response
     })
