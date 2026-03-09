@@ -248,10 +248,10 @@ export class WordpressClient {
      * @example
      * const { data: menus } = await client.menus()
      */
-    async menus() {
+    async menus(options) {
         const response = await this.dedupGet(this.http, '/menus', {
             page: 1, per_page: 100,
-        });
+        }, options?.signal);
         const paginated = extractPagination(response, 1, 100);
         return { ...paginated, data: paginated.data.map(toNavigationMenu) };
     }

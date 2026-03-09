@@ -17,5 +17,4 @@ export type { PaginatedResponse } from './utils/pagination';
 export { fetchAll } from './utils/pagination';
 export type { CacheOptions } from './utils/cache';
 export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressSchemaError, } from './errors';
-export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters';
 //# sourceMappingURL=index.d.ts.map

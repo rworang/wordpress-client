@@ -169,7 +169,7 @@ export declare class WordpressClient {
      * @example
      * const { data: menus } = await client.menus()
      */
-    menus(): Promise<PaginatedResponse<NavigationMenu>>;
+    menus(options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>>;
     /**
      * Fetch a paginated list of menu items, optionally filtered by menu.
      * Requires WP 5.9+ with the Menus REST API.
