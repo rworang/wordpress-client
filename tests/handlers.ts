@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { rawPost, rawPage, rawMedia, rawCategory } from './fixtures/raw'
+import { rawPost, rawPage, rawMedia, rawCategory, rawTag } from './fixtures/raw'
 
 const BASE = 'https://test.wp.com/wp-json'
 
@@ -76,6 +76,20 @@ export const handlers = [
     }
 
     return HttpResponse.json([rawCategory], {
+      headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+    })
+  }),
+
+  // Tags list
+  http.get(`${BASE}/wp/v2/tags`, ({ request }) => {
+    const url = new URL(request.url)
+    const slug = url.searchParams.get('slug')
+
+    if (slug === 'not-found') {
+      return HttpResponse.json([])
+    }
+
+    return HttpResponse.json([rawTag], {
       headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
     })
   }),

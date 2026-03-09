@@ -48,6 +48,10 @@ export interface PostQueryParams {
   sticky?: boolean
   /** Exclude posts with these IDs */
   exclude?: number[]
+  /** Include only posts modified before this ISO 8601 date */
+  modified_before?: string
+  /** Include only posts modified after this ISO 8601 date */
+  modified_after?: string
 }
 
 /** Query parameters for fetching categories and tags. */
@@ -66,6 +70,12 @@ export interface TaxonomyQueryParams {
   orderby?: 'id' | 'name' | 'slug' | 'count'
   /** Sort direction */
   order?: 'asc' | 'desc'
+  /** Filter by parent taxonomy ID (categories only, tags are flat) */
+  parent?: number
+  /** Include only taxonomies with these IDs */
+  include?: number[]
+  /** Exclude taxonomies with these IDs */
+  exclude?: number[]
 }
 
 /** Query parameters for fetching media items. */
