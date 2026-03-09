@@ -47,6 +47,10 @@ export interface PostQueryParams {
     sticky?: boolean;
     /** Exclude posts with these IDs */
     exclude?: number[];
+    /** Include only posts modified before this ISO 8601 date */
+    modified_before?: string;
+    /** Include only posts modified after this ISO 8601 date */
+    modified_after?: string;
 }
 /** Query parameters for fetching categories and tags. */
 export interface TaxonomyQueryParams {
@@ -64,6 +68,12 @@ export interface TaxonomyQueryParams {
     orderby?: 'id' | 'name' | 'slug' | 'count';
     /** Sort direction */
     order?: 'asc' | 'desc';
+    /** Filter by parent taxonomy ID (categories only, tags are flat) */
+    parent?: number;
+    /** Include only taxonomies with these IDs */
+    include?: number[];
+    /** Exclude taxonomies with these IDs */
+    exclude?: number[];
 }
 /** Query parameters for fetching media items. */
 export interface MediaQueryParams {
@@ -79,6 +89,52 @@ export interface MediaQueryParams {
     mime_type?: string;
     /** Field to sort by */
     orderby?: 'date' | 'title' | 'id';
+    /** Sort direction */
+    order?: 'asc' | 'desc';
+}
+/** Query parameters for fetching pages. */
+export interface PageQueryParams {
+    /** Page number (1-indexed) - defaults to 1 */
+    page?: number;
+    /** Results per page - defaults to 10 */
+    per_page?: number;
+    /** Search term to filter pages */
+    search?: string;
+    /** Filter by author ID */
+    author?: number;
+    /** Field to sort by - defaults to 'date' */
+    orderby?: 'date' | 'title' | 'slug' | 'author' | 'modified' | 'relevance' | 'menu_order';
+    /** Sort direction - defaults to 'desc' */
+    order?: 'asc' | 'desc';
+    /** Include only pages published before this ISO 8601 date */
+    before?: string;
+    /** Include only pages published after this ISO 8601 date */
+    after?: string;
+    /** Filter by exact slug(s) */
+    slug?: string | string[];
+    /** Filter by page status (requires authentication for non-public statuses) */
+    status?: 'publish' | 'draft' | 'pending' | 'private' | 'any';
+    /** Filter by parent page ID */
+    parent?: number;
+    /** Exclude pages with these parent IDs */
+    parent_exclude?: number[];
+    /** Exclude pages with these IDs */
+    exclude?: number[];
+    /** Include only pages with these IDs */
+    include?: number[];
+    /** Field to sort by for menu order */
+    menu_order?: number;
+}
+/** Query parameters for fetching menu items. */
+export interface MenuItemQueryParams {
+    /** Page number (1-indexed) - defaults to 1 */
+    page?: number;
+    /** Results per page - defaults to 100 */
+    per_page?: number;
+    /** Filter by menu ID */
+    menus?: number;
+    /** Field to sort by */
+    orderby?: 'menu_order' | 'id';
     /** Sort direction */
     order?: 'asc' | 'desc';
 }

@@ -18,8 +18,11 @@
 import axios from 'axios';
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry';
 import { toPost } from './adapters/post';
+import { toPage } from './adapters/page';
 import { toMedia } from './adapters/media';
 import { toCategory } from './adapters/category';
+import { toTag } from './adapters/tag';
+import { toMenuItem, toNavigationMenu } from './adapters/navigation';
 import { extractPagination } from './utils/pagination';
 import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors';
 import { dedup } from './utils/dedup';
@@ -85,11 +88,11 @@ export class WordpressClient {
      * // Filter by category
      * const { data: posts } = await client.posts({ categories: [5] })
      */
-    async posts(params = {}) {
+    async posts(params = {}, options) {
         const { page = 1, per_page = 10, ...rest } = params;
         const response = await this.dedupGet(this.http, '/posts', {
             _embed: true, page, per_page, ...rest,
-        });
+        }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toPost) };
     }
@@ -104,10 +107,10 @@ export class WordpressClient {
      *   console.log(post.title)
      * }
      */
-    async post(slug) {
+    async post(slug, options) {
         const response = await this.dedupGet(this.http, '/posts', {
             slug, _embed: true,
-        });
+        }, options?.signal);
         return response.data.length ? toPost(response.data[0]) : null;
     }
     /**
@@ -115,11 +118,51 @@ export class WordpressClient {
      *
      * @throws {WordpressNotFoundError} If the post doesn't exist
      */
-    async postById(id) {
+    async postById(id, options) {
         const response = await this.dedupGet(this.http, `/posts/${id}`, {
             _embed: true,
-        });
+        }, options?.signal);
         return toPost(response.data);
+    }
+    // ---- Pages ----
+    /**
+     * Fetch a paginated list of pages.
+     *
+     * @example
+     * const { data: pages } = await client.pages({ parent: 0 })
+     */
+    async pages(params = {}, options) {
+        const { page = 1, per_page = 10, ...rest } = params;
+        const response = await this.dedupGet(this.http, '/pages', {
+            _embed: true, page, per_page, ...rest,
+        }, options?.signal);
+        const paginated = extractPagination(response, page, per_page);
+        return { ...paginated, data: paginated.data.map(toPage) };
+    }
+    /**
+     * Fetch a single page by its URL slug.
+     *
+     * @returns The page, or null if not found
+     *
+     * @example
+     * const about = await client.page('about')
+     */
+    async page(slug, options) {
+        const response = await this.dedupGet(this.http, '/pages', {
+            slug, _embed: true,
+        }, options?.signal);
+        return response.data.length ? toPage(response.data[0]) : null;
+    }
+    /**
+     * Fetch a single page by its numeric ID.
+     *
+     * @throws {WordpressNotFoundError} If the page doesn't exist
+     */
+    async pageById(id, options) {
+        const response = await this.dedupGet(this.http, `/pages/${id}`, {
+            _embed: true,
+        }, options?.signal);
+        return toPage(response.data);
     }
     // ---- Categories ----
     /**
@@ -128,11 +171,11 @@ export class WordpressClient {
      * @example
      * const { data: categories } = await client.categories({ hide_empty: true })
      */
-    async categories(params = {}) {
+    async categories(params = {}, options) {
         const { page = 1, per_page = 100, ...rest } = params;
         const response = await this.dedupGet(this.http, '/categories', {
             page, per_page, ...rest,
-        });
+        }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toCategory) };
     }
@@ -141,11 +184,37 @@ export class WordpressClient {
      *
      * @returns The category, or null if not found
      */
-    async category(slug) {
+    async category(slug, options) {
         const response = await this.dedupGet(this.http, '/categories', {
             slug,
-        });
+        }, options?.signal);
         return response.data.length ? toCategory(response.data[0]) : null;
+    }
+    // ---- Tags ----
+    /**
+     * Fetch a paginated list of tags.
+     *
+     * @example
+     * const { data: tags } = await client.tags({ hide_empty: true })
+     */
+    async tags(params = {}, options) {
+        const { page = 1, per_page = 100, ...rest } = params;
+        const response = await this.dedupGet(this.http, '/tags', {
+            page, per_page, ...rest,
+        }, options?.signal);
+        const paginated = extractPagination(response, page, per_page);
+        return { ...paginated, data: paginated.data.map(toTag) };
+    }
+    /**
+     * Fetch a single tag by its URL slug.
+     *
+     * @returns The tag, or null if not found
+     */
+    async tag(slug, options) {
+        const response = await this.dedupGet(this.http, '/tags', {
+            slug,
+        }, options?.signal);
+        return response.data.length ? toTag(response.data[0]) : null;
     }
     // ---- Media ----
     /**
@@ -153,8 +222,8 @@ export class WordpressClient {
      *
      * @throws {WordpressNotFoundError} If the media doesn't exist
      */
-    async media(id) {
-        const response = await this.dedupGet(this.http, `/media/${id}`);
+    async media(id, options) {
+        const response = await this.dedupGet(this.http, `/media/${id}`, undefined, options?.signal);
         return toMedia(response.data);
     }
     /**
@@ -163,15 +232,70 @@ export class WordpressClient {
      * @example
      * const { data: images } = await client.mediaList({ media_type: 'image' })
      */
-    async mediaList(params = {}) {
+    async mediaList(params = {}, options) {
         const { page = 1, per_page = 10, ...rest } = params;
         const response = await this.dedupGet(this.http, '/media', {
             page, per_page, ...rest,
-        });
+        }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toMedia) };
     }
+    // ---- Navigation ----
+    /**
+     * Fetch a paginated list of navigation menus.
+     * Requires WP 5.9+ with the Menus REST API.
+     *
+     * @example
+     * const { data: menus } = await client.menus()
+     */
+    async menus() {
+        const response = await this.dedupGet(this.http, '/menus', {
+            page: 1, per_page: 100,
+        });
+        const paginated = extractPagination(response, 1, 100);
+        return { ...paginated, data: paginated.data.map(toNavigationMenu) };
+    }
+    /**
+     * Fetch a paginated list of menu items, optionally filtered by menu.
+     * Requires WP 5.9+ with the Menus REST API.
+     *
+     * @example
+     * // Get all items from menu ID 3
+     * const { data: items } = await client.menuItems({ menus: 3 })
+     */
+    async menuItems(params = {}, options) {
+        const { page = 1, per_page = 100, ...rest } = params;
+        const response = await this.dedupGet(this.http, '/menu-items', {
+            page, per_page, ...rest,
+        }, options?.signal);
+        const paginated = extractPagination(response, page, per_page);
+        return { ...paginated, data: paginated.data.map(toMenuItem) };
+    }
     // ---- Custom Endpoints ----
+    /**
+     * Fetch a paginated list from any WordPress REST API endpoint.
+     * Use this for custom post types or plugin endpoints not covered
+     * by the built-in methods.
+     *
+     * @param endpoint - The REST API path (e.g., '/products', '/events')
+     * @param params - Optional query parameters
+     * @returns Raw paginated response — caller is responsible for typing T as the item type
+     *
+     * @example
+     * // Fetch WooCommerce products
+     * interface Product { id: number; name: string; price: string }
+     * const { data, pagination } = await client.fetchCustom<Product>('/products')
+     *
+     * @example
+     * // With query parameters
+     * const { data } = await client.fetchCustom<Event>('/events', { per_page: 5 })
+     */
+    async fetchCustom(endpoint, params, options) {
+        const response = await this.dedupGet(this.http, endpoint, params, options?.signal);
+        const page = params?.page ?? 1;
+        const perPage = params?.per_page ?? 10;
+        return extractPagination(response, page, perPage);
+    }
     /**
      * Fetch the cache version from a custom WordPress endpoint.
      * Uses the `worang/v1` namespace, not the default `wp/v2`.
@@ -192,7 +316,7 @@ export class WordpressClient {
     clearCache() {
         this.cache?.clear();
     }
-    dedupGet(instance, url, params) {
+    dedupGet(instance, url, params, signal) {
         const key = `${url}:${JSON.stringify(params ?? {})}`;
         if (this.cache) {
             const cached = this.cache.get(key);
@@ -200,7 +324,10 @@ export class WordpressClient {
                 return cached;
         }
         return dedup(this.inflight, key, async () => {
-            const response = await instance.get(url, params ? { params } : undefined);
+            const response = await instance.get(url, {
+                ...(params ? { params } : {}),
+                ...(signal ? { signal } : {}),
+            });
             this.cache?.set(key, response);
             return response;
         });

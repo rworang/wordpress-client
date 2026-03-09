@@ -10,11 +10,12 @@
  * const { data: posts } = await client.posts({ per_page: 5 })
  */
 export { WordpressClient } from './client';
-export type { WordpressClientOptions } from './client';
-export type { Post, Media, Category, Author, } from './types/domain';
-export type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams, } from './types/params';
+export type { WordpressClientOptions, RequestOptions } from './client';
+export type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author, } from './types/domain';
+export type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, } from './types/params';
 export type { PaginatedResponse } from './utils/pagination';
+export { fetchAll } from './utils/pagination';
 export type { CacheOptions } from './utils/cache';
 export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressSchemaError, } from './errors';
-export { toPost, toMedia, toCategory, toAuthor } from './adapters';
+export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters';
 //# sourceMappingURL=index.d.ts.map
