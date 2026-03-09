@@ -14,36 +14,36 @@
 
 /** A WordPress post author. */
 export interface Author {
-  id: number;
-  name: string;
+  id: number
+  name: string
   /** Author's website URL */
-  url: string;
+  url: string
   /** Author bio */
-  description: string;
+  description: string
 }
 
 /** A WordPress category for organizing posts. */
 export interface Category {
-  id: number;
+  id: number
   /** URL-friendly identifier (e.g., 'tech-news') */
-  slug: string;
+  slug: string
   /** Display name (e.g., 'Tech News') */
-  name: string;
-  description?: string;
+  name: string
+  description?: string
   /** Number of posts in this category */
-  count?: number;
+  count?: number
 }
 
 /** A WordPress tag for labeling posts. */
 export interface Tag {
-  id: number;
+  id: number
   /** URL-friendly identifier (e.g., 'javascript') */
-  slug: string;
+  slug: string
   /** Display name (e.g., 'JavaScript') */
-  name: string;
-  description?: string;
+  name: string
+  description?: string
   /** Number of posts with this tag */
-  count?: number;
+  count?: number
 }
 
 /**
@@ -54,29 +54,29 @@ export interface Tag {
  * console.log(post?.title, post?.author.name)
  */
 export interface Post {
-  id: number;
+  id: number
   /** URL-friendly identifier */
-  slug: string;
+  slug: string
   /** Post title (HTML entities decoded) */
-  title: string;
+  title: string
   /** Full post content as HTML */
-  content: string;
+  content: string
   /** Short excerpt as HTML */
-  excerpt: string;
-  author: Author;
+  excerpt: string
+  author: Author
   /** Basic featured image info (use featuredMedia for full details) */
   featuredImage: {
-    id: number | undefined;
-    url: string;
-    alt: string;
-  };
+    id: number | undefined
+    url: string
+    alt: string
+  }
   /** Full featured media with all size variants */
-  featuredMedia?: Media;
+  featuredMedia?: Media
   /** ISO 8601 publication date */
-  date: string;
-  categories: Category[];
+  date: string
+  categories: Category[]
   /** Whether this post is pinned/sticky */
-  sticky: boolean;
+  sticky: boolean
 }
 
 /**
@@ -87,30 +87,30 @@ export interface Post {
  * console.log(page?.title)
  */
 export interface Page {
-  id: number;
+  id: number
   /** URL-friendly identifier */
-  slug: string;
+  slug: string
   /** Page title (HTML entities decoded) */
-  title: string;
+  title: string
   /** Full page content as HTML */
-  content: string;
+  content: string
   /** Short excerpt as HTML */
-  excerpt: string;
-  author: Author;
+  excerpt: string
+  author: Author
   /** Basic featured image info (use featuredMedia for full details) */
   featuredImage: {
-    id: number | undefined;
-    url: string;
-    alt: string;
-  };
+    id: number | undefined
+    url: string
+    alt: string
+  }
   /** Full featured media with all size variants */
-  featuredMedia?: Media;
+  featuredMedia?: Media
   /** ISO 8601 publication date */
-  date: string;
+  date: string
   /** Parent page ID (0 if top-level) */
-  parent: number;
+  parent: number
   /** Menu ordering value */
-  menuOrder: number;
+  menuOrder: number
 }
 
 /**
@@ -122,24 +122,66 @@ export interface Page {
  */
 export interface Media {
   /** Full-size URL */
-  url: string;
-  id: number;
+  url: string
+  id: number
   /** Alt text for accessibility */
-  alt: string;
-  mimeType: string;
+  alt: string
+  mimeType: string
   /** Full-size width in pixels */
-  width: number;
+  width: number
   /** Full-size height in pixels */
-  height: number;
+  height: number
   /** Responsive size variants (thumbnail, medium, large, etc.) */
   sizes: Record<
     string,
     {
-      url: string;
-      width: number;
-      height: number;
-      mimeType: string;
-      filesize?: number;
+      url: string
+      width: number
+      height: number
+      mimeType: string
+      filesize?: number
     }
-  >;
+  >
+}
+
+/**
+ * A WordPress navigation menu item.
+ *
+ * Represents a single link in a navigation menu, with support for hierarchy.
+ * Requires WP 5.9+ with the Menus REST API.
+ */
+export interface MenuItem {
+  id: number
+  /** Display label */
+  title: string
+  /** Target URL */
+  url: string
+  /** Menu this item belongs to */
+  menus: number
+  /** Parent menu item ID (0 if top-level) */
+  parent: number
+  /** Display order */
+  menuOrder: number
+  /** Type of object this links to (e.g., 'post_type', 'custom', 'taxonomy') */
+  objectType: string
+  /** Specific object (e.g., 'page', 'post', 'category') */
+  object: string
+  /** The linked object's ID (0 for custom links) */
+  objectId: number
+  /** Link target (e.g., '_blank') */
+  target: string
+}
+
+/**
+ * A WordPress navigation menu (the container, not individual items).
+ *
+ * Requires WP 5.9+ with the Menus REST API.
+ */
+export interface NavigationMenu {
+  id: number
+  /** Menu name */
+  name: string
+  /** Menu slug */
+  slug: string
+  description: string
 }

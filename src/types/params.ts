@@ -129,3 +129,17 @@ export interface PageQueryParams {
   /** Field to sort by for menu order */
   menu_order?: number
 }
+
+/** Query parameters for fetching menu items. */
+export interface MenuItemQueryParams {
+  /** Page number (1-indexed) - defaults to 1 */
+  page?: number
+  /** Results per page - defaults to 100 */
+  per_page?: number
+  /** Filter by menu ID */
+  menus?: number
+  /** Field to sort by */
+  orderby?: 'menu_order' | 'id'
+  /** Sort direction */
+  order?: 'asc' | 'desc'
+}

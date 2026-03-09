@@ -1,4 +1,4 @@
-import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
+import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawMenuItem, RawNavigationMenu, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
 
 export const rawAuthor: RawAuthor = {
   id: 1,
@@ -95,4 +95,24 @@ export const rawPage: RawPage = {
     'wp:featuredmedia': [rawFeaturedMedia],
     author: [rawAuthor],
   },
+}
+
+export const rawNavigationMenu: RawNavigationMenu = {
+  id: 3,
+  name: 'Main Menu',
+  slug: 'main-menu',
+  description: 'Primary navigation',
+}
+
+export const rawMenuItem: RawMenuItem = {
+  id: 10,
+  title: { rendered: 'About' },
+  url: 'https://example.com/about',
+  menus: 3,
+  parent: 0,
+  menu_order: 1,
+  type: 'post_type',
+  object: 'page',
+  object_id: 2,
+  target: '',
 }

@@ -21,6 +21,8 @@ export type {
   Media,
   Category,
   Tag,
+  MenuItem,
+  NavigationMenu,
   Author,
 } from './types/domain'
 
@@ -29,6 +31,7 @@ export type {
   PageQueryParams,
   TaxonomyQueryParams,
   MediaQueryParams,
+  MenuItemQueryParams,
 } from './types/params'
 
 export type { PaginatedResponse } from './utils/pagination'
@@ -44,4 +47,4 @@ export {
 } from './errors'
 
 // Adapters (for advanced use cases)
-export { toPost, toPage, toMedia, toCategory, toTag, toAuthor } from './adapters'
+export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters'
