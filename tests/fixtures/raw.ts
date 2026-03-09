@@ -1,4 +1,4 @@
-import type { RawPost, RawPage, RawMedia, RawCategory, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
+import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
 
 export const rawAuthor: RawAuthor = {
   id: 1,
@@ -13,6 +13,14 @@ export const rawCategory: RawCategory = {
   name: 'Technology',
   description: 'Tech posts',
   count: 12,
+}
+
+export const rawTag: RawTag = {
+  id: 8,
+  slug: 'javascript',
+  name: 'JavaScript',
+  description: 'JavaScript posts',
+  count: 7,
 }
 
 export const rawFeaturedMedia: RawFeaturedMedia = {

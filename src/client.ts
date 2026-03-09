@@ -18,13 +18,14 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
-import type { RawPost, RawPage, RawMedia, RawCategory } from './types/raw'
-import type { Post, Page, Media, Category } from './types/domain'
+import type { RawPost, RawPage, RawMedia, RawCategory, RawTag } from './types/raw'
+import type { Post, Page, Media, Category, Tag } from './types/domain'
 import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
 import { toCategory } from './adapters/category'
+import { toTag } from './adapters/tag'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
 import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors'
 import { dedup } from './utils/dedup'
@@ -242,6 +243,35 @@ export class WordpressClient {
       slug,
     })
     return response.data.length ? toCategory(response.data[0]) : null
+  }
+
+  // ---- Tags ----
+
+  /**
+   * Fetch a paginated list of tags.
+   *
+   * @example
+   * const { data: tags } = await client.tags({ hide_empty: true })
+   */
+  async tags(params: TaxonomyQueryParams = {}): Promise<PaginatedResponse<Tag>> {
+    const { page = 1, per_page = 100, ...rest } = params
+    const response = await this.dedupGet<RawTag[]>(this.http, '/tags', {
+      page, per_page, ...rest,
+    })
+    const paginated = extractPagination(response, page, per_page)
+    return { ...paginated, data: paginated.data.map(toTag) }
+  }
+
+  /**
+   * Fetch a single tag by its URL slug.
+   *
+   * @returns The tag, or null if not found
+   */
+  async tag(slug: string): Promise<Tag | null> {
+    const response = await this.dedupGet<RawTag[]>(this.http, '/tags', {
+      slug,
+    })
+    return response.data.length ? toTag(response.data[0]) : null
   }
 
   // ---- Media ----
