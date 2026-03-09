@@ -184,6 +184,16 @@ describe('WordpressClient', () => {
       expect(item.object).toBe('page')
       expect(item.objectId).toBe(2)
     })
+
+    it('aborts a menus request when signal is triggered', async () => {
+      const controller = new AbortController()
+      controller.abort()
+
+      const client = createClient()
+      await expect(
+        client.menus({ signal: controller.signal }),
+      ).rejects.toThrow()
+    })
   })
 
   describe('fetchCustom', () => {
