@@ -4,6 +4,7 @@
  */
 
 export { toPost } from './post'
+export { toPage } from './page'
 export { toMedia, toMediaFromFeatured } from './media'
 export { toCategory } from './category'
 export { toAuthor } from './author'

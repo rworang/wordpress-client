@@ -85,3 +85,37 @@ export interface MediaQueryParams {
   /** Sort direction */
   order?: 'asc' | 'desc'
 }
+
+/** Query parameters for fetching pages. */
+export interface PageQueryParams {
+  /** Page number (1-indexed) - defaults to 1 */
+  page?: number
+  /** Results per page - defaults to 10 */
+  per_page?: number
+  /** Search term to filter pages */
+  search?: string
+  /** Filter by author ID */
+  author?: number
+  /** Field to sort by - defaults to 'date' */
+  orderby?: 'date' | 'title' | 'slug' | 'author' | 'modified' | 'relevance' | 'menu_order'
+  /** Sort direction - defaults to 'desc' */
+  order?: 'asc' | 'desc'
+  /** Include only pages published before this ISO 8601 date */
+  before?: string
+  /** Include only pages published after this ISO 8601 date */
+  after?: string
+  /** Filter by exact slug(s) */
+  slug?: string | string[]
+  /** Filter by page status (requires authentication for non-public statuses) */
+  status?: 'publish' | 'draft' | 'pending' | 'private' | 'any'
+  /** Filter by parent page ID */
+  parent?: number
+  /** Exclude pages with these parent IDs */
+  parent_exclude?: number[]
+  /** Exclude pages with these IDs */
+  exclude?: number[]
+  /** Include only pages with these IDs */
+  include?: number[]
+  /** Field to sort by for menu order */
+  menu_order?: number
+}

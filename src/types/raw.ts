@@ -83,3 +83,18 @@ export interface RawPost {
     author?: RawAuthor[];
   };
 }
+
+export interface RawPage {
+  id: number;
+  slug: string;
+  title: { rendered: string };
+  content: { rendered: string };
+  excerpt: { rendered: string };
+  date: string;
+  parent: number;
+  menu_order: number;
+  _embedded?: {
+    'wp:featuredmedia'?: RawFeaturedMedia[];
+    author?: RawAuthor[];
+  };
+}

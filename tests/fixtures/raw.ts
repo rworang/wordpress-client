@@ -1,4 +1,4 @@
-import type { RawPost, RawMedia, RawCategory, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
+import type { RawPost, RawPage, RawMedia, RawCategory, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
 
 export const rawAuthor: RawAuthor = {
   id: 1,
@@ -70,6 +70,21 @@ export const rawPost: RawPost = {
   _embedded: {
     'wp:featuredmedia': [rawFeaturedMedia],
     'wp:term': [[rawCategory]],
+    author: [rawAuthor],
+  },
+}
+
+export const rawPage: RawPage = {
+  id: 2,
+  slug: 'about',
+  title: { rendered: 'About Us' },
+  content: { rendered: '<p>About us content</p>' },
+  excerpt: { rendered: '<p>About us excerpt</p>' },
+  date: '2024-01-10T08:00:00',
+  parent: 0,
+  menu_order: 1,
+  _embedded: {
+    'wp:featuredmedia': [rawFeaturedMedia],
     author: [rawAuthor],
   },
 }
