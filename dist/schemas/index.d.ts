@@ -1,5 +1,8 @@
 export { RawAuthorSchema } from './author';
 export { RawCategorySchema } from './category';
 export { RawMediaSchema, RawFeaturedMediaSchema } from './media';
+export { RawMenuItemSchema, RawNavigationMenuSchema } from './navigation';
+export { RawPageSchema } from './page';
 export { RawPostSchema } from './post';
+export { RawTagSchema } from './tag';
 //# sourceMappingURL=index.d.ts.map

@@ -14,6 +14,4 @@ export { WordpressClient } from './client';
 export { fetchAll } from './utils/pagination';
 // Errors
 export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressSchemaError, } from './errors';
-// Adapters (for advanced use cases)
-export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters';
 //# sourceMappingURL=index.js.map

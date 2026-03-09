@@ -16,7 +16,7 @@ export const toMedia = (raw) => {
     return {
         id: raw.id,
         url: raw.guid.rendered,
-        alt: raw.description?.rendered ?? '',
+        alt: raw.description.rendered,
         mimeType: raw.mime_type,
         width: raw.media_details.width,
         height: raw.media_details.height,
