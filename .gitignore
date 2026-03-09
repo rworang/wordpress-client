@@ -28,3 +28,4 @@ coverage
 # old
 docs
 .claude/
+.sprints/
