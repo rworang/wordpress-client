@@ -156,6 +156,41 @@ describe('WordpressClient', () => {
     })
   })
 
+  describe('fetchCustom', () => {
+    it('fetches data from a custom endpoint', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/events`, () => {
+          return HttpResponse.json(
+            [{ id: 1, title: 'Conference' }],
+            { headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' } },
+          )
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.fetchCustom<{ id: number; title: string }>('/events')
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].title).toBe('Conference')
+      expect(result.pagination.total).toBe(1)
+    })
+
+    it('passes query parameters through', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/products`, ({ request }) => {
+          const url = new URL(request.url)
+          const perPage = url.searchParams.get('per_page')
+          expect(perPage).toBe('5')
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      await client.fetchCustom('/products', { per_page: 5 })
+    })
+  })
+
   describe('error handling', () => {
     it('throws WordpressAuthError for 403', async () => {
       server.use(
