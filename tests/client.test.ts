@@ -113,6 +113,28 @@ describe('WordpressClient', () => {
     })
   })
 
+  describe('tags', () => {
+    it('fetches paginated tags', async () => {
+      const client = createClient()
+      const result = await client.tags()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].slug).toBe('javascript')
+    })
+
+    it('returns tag by slug', async () => {
+      const client = createClient()
+      const tag = await client.tag('javascript')
+      expect(tag).not.toBeNull()
+      expect(tag!.name).toBe('JavaScript')
+    })
+
+    it('returns null for non-existent tag slug', async () => {
+      const client = createClient()
+      const tag = await client.tag('not-found')
+      expect(tag).toBeNull()
+    })
+  })
+
   describe('media', () => {
     it('fetches media by ID', async () => {
       const client = createClient()

@@ -34,6 +34,18 @@ export interface Category {
   count?: number;
 }
 
+/** A WordPress tag for labeling posts. */
+export interface Tag {
+  id: number;
+  /** URL-friendly identifier (e.g., 'javascript') */
+  slug: string;
+  /** Display name (e.g., 'JavaScript') */
+  name: string;
+  description?: string;
+  /** Number of posts with this tag */
+  count?: number;
+}
+
 /**
  * A WordPress post with embedded author, categories, and media.
  *

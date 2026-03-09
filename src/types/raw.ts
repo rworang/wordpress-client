@@ -62,6 +62,14 @@ export interface RawCategory {
   count?: number;
 }
 
+export interface RawTag {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string;
+  count?: number;
+}
+
 export interface RawAuthor {
   id: number;
   name: string;
