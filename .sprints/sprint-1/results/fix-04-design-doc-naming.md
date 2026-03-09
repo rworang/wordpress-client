@@ -6,10 +6,10 @@
 
 Replaced all 2 occurrences in `.sprints/sprint-1/design/01-wordpress-client.md`:
 
-| Line | Context |
-|------|---------|
-| 133 | `constructor(config: WordpressClientOptions) {` (Block 0 client dedup ownership code sample) |
-| 396 | `export type { WordpressClientOptions } from './client'` (Section 6 public API surface) |
+| Line | Context                                                                                      |
+| ---- | -------------------------------------------------------------------------------------------- |
+| 133  | `constructor(config: WordpressClientOptions) {` (Block 0 client dedup ownership code sample) |
+| 396  | `export type { WordpressClientOptions } from './client'` (Section 6 public API surface)      |
 
 Confirmed against `src/client.ts:44`: `export interface WordpressClientOptions`
 
@@ -17,14 +17,14 @@ Confirmed against `src/client.ts:44`: `export interface WordpressClientOptions`
 
 Replaced all 6 occurrences in `.sprints/sprint-1/design/01-wordpress-client.md`:
 
-| Line (approx.) | Context |
-|----------------|---------|
-| 79 | Module layout comment: `domain.ts # + Page, Tag, NavigationMenu, MenuItem` |
-| 268 | Type definition: `interface MenuItem {` |
-| 275 | Self-reference in parent comment: `(ID of parent MenuItem)` |
-| 276 | Self-reference in children field: `children: MenuItem[]` |
-| 283 | `NavigationMenu.items` field: `items: MenuItem[]` |
-| 399 | Public API exports: `... NavigationMenu, MenuItem } from './types/domain'` |
+| Line (approx.) | Context                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| 79             | Module layout comment: `domain.ts # + Page, Tag, NavigationMenu, MenuItem` |
+| 268            | Type definition: `interface MenuItem {`                                    |
+| 275            | Self-reference in parent comment: `(ID of parent MenuItem)`                |
+| 276            | Self-reference in children field: `children: MenuItem[]`                   |
+| 283            | `NavigationMenu.items` field: `items: MenuItem[]`                          |
+| 399            | Public API exports: `... NavigationMenu, MenuItem } from './types/domain'` |
 
 Confirmed against `src/types/domain.ts:153`: `export interface MenuItem`
 
@@ -55,23 +55,25 @@ The following divergences were found during inspection. They are **not fixed in 
 ### 1. `NavigationMenu` structure diverged
 
 Design doc (Section 4 — Block 4):
+
 ```typescript
 interface NavigationMenu {
-  id: number
-  slug: string
-  title: string       // design uses `title`
-  items: MenuItem[]   // design has `items` array
+	id: number
+	slug: string
+	title: string // design uses `title`
+	items: MenuItem[] // design has `items` array
 }
 ```
 
 Actual `src/types/domain.ts`:
+
 ```typescript
 interface NavigationMenu {
-  id: number
-  name: string        // implementation uses `name`, not `title`
-  slug: string
-  description: string // implementation has `description`, not `items`
-  // no `items` field
+	id: number
+	name: string // implementation uses `name`, not `title`
+	slug: string
+	description: string // implementation has `description`, not `items`
+	// no `items` field
 }
 ```
 
@@ -84,6 +86,7 @@ Actual `src/types/domain.ts:153` has `menus`, `menuOrder`, `objectType`, `object
 ### 3. Client navigation method names diverged
 
 Design doc (Section 4 — Block 4) specifies:
+
 ```typescript
 navigationMenus(): Promise<NavigationMenu[]>
 navigationMenu(slug: string): Promise<NavigationMenu | null>
@@ -98,6 +101,7 @@ Design doc Section 6 exports `WordpressNetworkError` from `./errors`. The actual
 ### 5. Target module layout — `toNavigation()` adapter name
 
 Design doc module layout comment shows:
+
 ```
 └── navigation.ts     # toNavigation()   [NEW — Block 4]
 ```
