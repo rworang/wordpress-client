@@ -5,7 +5,7 @@
  * Flattens the nested media_details structure and converts responsive
  * image sizes into an easy-to-use sizes record. Validates input with Zod.
  */
-import { RawMediaSchema } from '../schemas/media';
+import { RawMediaSchema, RawFeaturedMediaSchema } from '../schemas/media';
 import { WordpressSchemaError } from '../errors';
 /** @internal Converts a raw WordPress media item to a clean Media object. */
 export const toMedia = (raw) => {
@@ -36,6 +36,10 @@ export const toMedia = (raw) => {
 export function toMediaFromFeatured(raw) {
     if (!raw?.media_details)
         return undefined;
+    const result = RawFeaturedMediaSchema.safeParse(raw);
+    if (!result.success) {
+        throw new WordpressSchemaError('featured media', result.error.issues);
+    }
     return {
         id: raw.id,
         url: raw.source_url,
@@ -54,22 +58,5 @@ export function toMediaFromFeatured(raw) {
             },
         ])),
     };
-}
-/**
- * @deprecated Use `toMediaFromFeatured` instead — it avoids the extra HTTP call
- * by using embedded media data from `_embed`.
- * @internal Fetches full media details for a media ID.
- */
-export async function hydrateMedia(client, id) {
-    if (!id)
-        return null;
-    try {
-        const media = await client.media(id);
-        return media;
-    }
-    catch (error) {
-        console.warn('Failed to hydrate media', id, error);
-        return null;
-    }
 }
 //# sourceMappingURL=media.js.map

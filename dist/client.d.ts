@@ -18,6 +18,7 @@
 import type { Post, Media, Category } from './types/domain';
 import type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params';
 import { type PaginatedResponse } from './utils/pagination';
+import { type CacheOptions } from './utils/cache';
 /**
  * Configuration options for the WordPress client.
  *
@@ -39,6 +40,8 @@ export interface WordpressClientOptions {
         /** Number of retry attempts - defaults to 3 */
         retries?: number;
     };
+    /** Response cache configuration. Set to false to disable caching entirely. */
+    cache?: CacheOptions | false;
 }
 /**
  * Typed client for fetching posts, categories, and media from WordPress.
@@ -55,12 +58,14 @@ export declare class WordpressClient {
     private readonly http;
     private readonly siteHttp;
     private readonly siteBaseURL;
+    private readonly cache;
+    private readonly inflight;
     /**
      * Creates a new WordPress client.
      *
      * @throws {Error} If baseURL is not provided
      */
-    constructor({ baseURL, namespace, timeout, retry, }: WordpressClientOptions);
+    constructor({ baseURL, namespace, timeout, retry, cache, }: WordpressClientOptions);
     /**
      * Fetch a paginated list of posts.
      *
@@ -124,6 +129,8 @@ export declare class WordpressClient {
      * @returns The version string, or null if the endpoint is unavailable
      */
     cacheVersion(): Promise<string | null>;
+    /** Clear all cached responses. */
+    clearCache(): void;
     private dedupGet;
     private handleError;
 }
