@@ -6,7 +6,6 @@
  * image sizes into an easy-to-use sizes record. Validates input with Zod.
  */
 
-import type { WordpressClient } from '../client'
 import type { RawMedia, RawFeaturedMedia } from '../types/raw'
 import type { Media } from '../types/domain'
 import { RawMediaSchema, RawFeaturedMediaSchema } from '../schemas/media'
@@ -69,21 +68,5 @@ export function toMediaFromFeatured(raw?: RawFeaturedMedia): Media | undefined {
         },
       ]),
     ),
-  }
-}
-
-/**
- * @deprecated Use `toMediaFromFeatured` instead — it avoids the extra HTTP call
- * by using embedded media data from `_embed`.
- * @internal Fetches full media details for a media ID.
- */
-export async function hydrateMedia(client: WordpressClient, id?: number): Promise<Media | null> {
-  if (!id) return null
-  try {
-    const media = await client.media(id)
-    return media
-  } catch (error) {
-    console.warn('Failed to hydrate media', id, error)
-    return null
   }
 }

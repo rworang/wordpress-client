@@ -6,9 +6,11 @@
  * otherwise executes the factory function and caches the promise until it settles.
  */
 
-const inflight = new Map<string, Promise<unknown>>()
-
-export function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
+export function dedup<T>(
+  inflight: Map<string, Promise<unknown>>,
+  key: string,
+  fn: () => Promise<T>,
+): Promise<T> {
   const existing = inflight.get(key)
   if (existing) return existing as Promise<T>
 

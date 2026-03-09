@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from './server'
 import { WordpressClient } from '../src/client'
-import { WordpressNotFoundError, WordpressAuthError } from '../src/errors'
+import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -106,6 +106,57 @@ describe('WordpressClient', () => {
 
       const client = createClient()
       await expect(client.posts()).rejects.toThrow(WordpressAuthError)
+    })
+
+    it('throws WordpressValidationError for 400', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            {
+              code: 'rest_invalid_param',
+              message: 'Invalid parameter(s): per_page',
+              data: {
+                status: 400,
+                params: { per_page: 'per_page must be between 1 and 100.' },
+              },
+            },
+            { status: 400 },
+          )
+        }),
+      )
+
+      const client = createClient()
+      await expect(client.posts()).rejects.toThrow(WordpressValidationError)
+    })
+
+    it('includes field details in WordpressValidationError', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            {
+              code: 'rest_invalid_param',
+              message: 'Invalid parameter(s): per_page',
+              data: {
+                status: 400,
+                params: { per_page: 'per_page must be between 1 and 100.' },
+              },
+            },
+            { status: 400 },
+          )
+        }),
+      )
+
+      const client = createClient()
+      try {
+        await client.posts()
+        expect.fail('Should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(WordpressValidationError)
+        const validationErr = err as WordpressValidationError
+        expect(validationErr.details).toEqual({
+          per_page: ['per_page must be between 1 and 100.'],
+        })
+      }
     })
   })
 

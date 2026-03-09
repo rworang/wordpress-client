@@ -25,7 +25,7 @@ import { toPost } from './adapters/post'
 import { toMedia } from './adapters/media'
 import { toCategory } from './adapters/category'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
-import { WordpressError, WordpressNotFoundError, WordpressAuthError } from './errors'
+import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors'
 import { dedup } from './utils/dedup'
 import { TTLCache, type CacheOptions } from './utils/cache'
 
@@ -70,6 +70,7 @@ export class WordpressClient {
   private readonly siteHttp: AxiosInstance
   private readonly siteBaseURL: string
   private readonly cache: TTLCache<unknown> | null
+  private readonly inflight = new Map<string, Promise<unknown>>()
 
   /**
    * Creates a new WordPress client.
@@ -259,7 +260,7 @@ export class WordpressClient {
       if (cached) return cached as Promise<import('axios').AxiosResponse<T>>
     }
 
-    return dedup(key, async () => {
+    return dedup(this.inflight, key, async () => {
       const response = await instance.get<T>(url, params ? { params } : undefined)
       this.cache?.set(key, response)
       return response
@@ -275,7 +276,7 @@ export class WordpressClient {
       const status = error.response.status
       const raw = error.response.data
       const data = typeof raw === 'object' && raw !== null
-        ? raw as { message?: string; code?: string }
+        ? raw as { message?: string; code?: string; data?: { params?: Record<string, string> } }
         : undefined
       const message = data?.message || error.message
 
@@ -284,6 +285,13 @@ export class WordpressClient {
       }
       if (status === 401 || status === 403) {
         throw new WordpressAuthError(message)
+      }
+      if (status === 400) {
+        const params = data?.data?.params
+        const details = params
+          ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]]))
+          : undefined
+        throw new WordpressValidationError(message, details)
       }
       throw new WordpressError(message, status, data?.code)
     }
