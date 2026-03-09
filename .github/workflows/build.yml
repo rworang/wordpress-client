@@ -9,14 +9,14 @@ on:
       - "package.json"
       - "tsconfig.json"
       - "tsconfig.build.json"
-      - "package-lock.json"
-      - "yarn.lock"
       - "pnpm-lock.yaml"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
