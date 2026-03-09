@@ -18,14 +18,15 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
-import type { RawPost, RawPage, RawMedia, RawCategory, RawTag } from './types/raw'
-import type { Post, Page, Media, Category, Tag } from './types/domain'
-import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams } from './types/params'
+import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawMenuItem, RawNavigationMenu } from './types/raw'
+import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu } from './types/domain'
+import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams } from './types/params'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
 import { toCategory } from './adapters/category'
 import { toTag } from './adapters/tag'
+import { toMenuItem, toNavigationMenu } from './adapters/navigation'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
 import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors'
 import { dedup } from './utils/dedup'
@@ -299,6 +300,40 @@ export class WordpressClient {
     })
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toMedia) }
+  }
+
+  // ---- Navigation ----
+
+  /**
+   * Fetch a paginated list of navigation menus.
+   * Requires WP 5.9+ with the Menus REST API.
+   *
+   * @example
+   * const { data: menus } = await client.menus()
+   */
+  async menus(): Promise<PaginatedResponse<NavigationMenu>> {
+    const response = await this.dedupGet<RawNavigationMenu[]>(this.http, '/menus', {
+      page: 1, per_page: 100,
+    })
+    const paginated = extractPagination(response, 1, 100)
+    return { ...paginated, data: paginated.data.map(toNavigationMenu) }
+  }
+
+  /**
+   * Fetch a paginated list of menu items, optionally filtered by menu.
+   * Requires WP 5.9+ with the Menus REST API.
+   *
+   * @example
+   * // Get all items from menu ID 3
+   * const { data: items } = await client.menuItems({ menus: 3 })
+   */
+  async menuItems(params: MenuItemQueryParams = {}): Promise<PaginatedResponse<MenuItem>> {
+    const { page = 1, per_page = 100, ...rest } = params
+    const response = await this.dedupGet<RawMenuItem[]>(this.http, '/menu-items', {
+      page, per_page, ...rest,
+    })
+    const paginated = extractPagination(response, page, per_page)
+    return { ...paginated, data: paginated.data.map(toMenuItem) }
   }
 
   // ---- Custom Endpoints ----
