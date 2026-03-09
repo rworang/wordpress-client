@@ -10,25 +10,27 @@ Removed `package-lock.json` and `yarn.lock` from the `paths` filter in
 making them dead trigger entries.
 
 **Before:**
+
 ```yaml
-    paths:
-      - "src/**"
-      - "package.json"
-      - "tsconfig.json"
-      - "tsconfig.build.json"
-      - "package-lock.json"
-      - "yarn.lock"
-      - "pnpm-lock.yaml"
+paths:
+  - "src/**"
+  - "package.json"
+  - "tsconfig.json"
+  - "tsconfig.build.json"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "pnpm-lock.yaml"
 ```
 
 **After:**
+
 ```yaml
-    paths:
-      - "src/**"
-      - "package.json"
-      - "tsconfig.json"
-      - "tsconfig.build.json"
-      - "pnpm-lock.yaml"
+paths:
+  - "src/**"
+  - "package.json"
+  - "tsconfig.json"
+  - "tsconfig.build.json"
+  - "pnpm-lock.yaml"
 ```
 
 ### 2. Added `permissions: contents: write` at job level
@@ -36,10 +38,10 @@ making them dead trigger entries.
 The `build` job lacked any `permissions` block. Added:
 
 ```yaml
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+build:
+  runs-on: ubuntu-latest
+  permissions:
+    contents: write
 ```
 
 ---
@@ -53,6 +55,7 @@ level. Since late 2023, GitHub Actions defaults to read-only `GITHUB_TOKEN` perm
 (`contents: read`) unless explicitly overridden.
 
 The "Commit and push dist" step runs:
+
 ```sh
 git add -f dist/
 git diff --staged --quiet || git commit -m "chore: update dist [skip ci]"
@@ -75,6 +78,7 @@ workflow status appeared green or was not blocking merges, masking the failure.
 
 The `chore: update dist [skip ci]` commit at `f22d060` was produced after F-01 merged.
 This may indicate:
+
 - A manual `workflow_dispatch` run was triggered, or
 - Permissions were temporarily granted, or
 - The workflow was re-run at some point after blocks 1–5 accumulated.

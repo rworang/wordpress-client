@@ -32,12 +32,14 @@ Previously missing from stale dist, now present:
 ## Verification Grep Outputs
 
 ### dist/adapters/ contents
+
 ```
 author.js, category.js, index.js, media.js, navigation.js, page.js, post.js, tag.js
 (plus matching .d.ts and .js.map files for each)
 ```
 
 ### fetchAll export in dist/utils/pagination.js
+
 ```
  * import { fetchAll } from '@worang/wordpress-client'
  * const allPosts = await fetchAll((page) => client.posts({ page, per_page: 100 }))
@@ -45,18 +47,21 @@ export async function fetchAll(fn) {
 ```
 
 ### Key symbols in dist/index.js
+
 ```
 export { WordpressClient } from './client';
 export { fetchAll } from './utils/pagination';
 ```
 
 ### Adapter functions NOT in dist/index.js
+
 ```
 grep "toPost\|toPage\|toMedia" dist/index.js
 (no output — exit code 1)
 ```
 
 ### dist/index.d.ts
+
 ```
 -rw-r--r-- 1 amnezia amnezia 1060 Mar  9 23:14 dist/index.d.ts
 19 dist/index.d.ts
