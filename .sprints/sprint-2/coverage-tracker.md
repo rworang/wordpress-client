@@ -2,7 +2,7 @@
 
 **Sprint:** sprint-2
 **Started:** 2026-03-10
-**Last updated:** 2026-03-10 (block-04 complete)
+**Last updated:** 2026-03-10 (block-05 complete)
 
 ---
 
@@ -14,7 +14,7 @@
 | block-02 | Content Completeness   | [✍](prompts/block-02-content-completeness.md) | [✅](results/block-02-content-completeness.md) | `block-02/content-completeness` | ✅     | +2 (65→67) |
 | block-03 | DX and Quality         | [✍](prompts/block-03-dx-and-quality.md)       | [✅](results/block-03-dx-and-quality.md)       | `block-03/dx-and-quality`       | ✅     | 0 (67→67)  |
 | block-04 | Tooling (lint/format)  | [✍](prompts/block-04-tooling.md)              | [✅](results/block-04-tooling.md)              | `block-04/tooling`              | ✅     | 0 (67→67)  |
-| block-05 | Optional Features      | [✍](prompts/block-05-optional-features.md)    | —                                              | `block-05/optional-features`    | ⬜     | —          |
+| block-05 | Optional Features      | [✍](prompts/block-05-optional-features.md)    | [✅](results/block-05-optional-features.md)    | `block-05/optional-features`    | ✅     | +4 (67→71) |
 | block-06 | Advisor-Gated Features | — (blocked: A-01, A-02)                       | —                                              | —                               | ⬜     | —          |
 
 **Status legend:**
