@@ -190,9 +190,7 @@ describe('WordpressClient', () => {
       controller.abort()
 
       const client = createClient()
-      await expect(
-        client.menus({}, { signal: controller.signal }),
-      ).rejects.toThrow()
+      await expect(client.menus({}, { signal: controller.signal })).rejects.toThrow()
     })
 
     it('passes per_page param to menus request', async () => {
@@ -216,10 +214,9 @@ describe('WordpressClient', () => {
     it('fetches data from a custom endpoint', async () => {
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/events`, () => {
-          return HttpResponse.json(
-            [{ id: 1, title: 'Conference' }],
-            { headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' } },
-          )
+          return HttpResponse.json([{ id: 1, title: 'Conference' }], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
         }),
       )
 
@@ -251,15 +248,12 @@ describe('WordpressClient', () => {
     it('throws WordpressAuthError for 403', async () => {
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
-          return HttpResponse.json(
-            { code: 'rest_forbidden', message: 'Forbidden' },
-            { status: 403 },
-          )
+          return HttpResponse.json({ code: 'rest_forbidden', message: 'Forbidden' }, { status: 403 })
         }),
       )
 
       const client = createClient()
-      const error = await client.posts().catch(e => e)
+      const error = await client.posts().catch((e) => e)
       expect(error).toBeInstanceOf(WordpressAuthError)
       expect(error.statusCode).toBe(403)
     })
@@ -275,7 +269,7 @@ describe('WordpressClient', () => {
       )
 
       const client = createClient()
-      const error = await client.postById(1).catch(e => e)
+      const error = await client.postById(1).catch((e) => e)
       expect(error).toBeInstanceOf(WordpressAuthError)
       expect(error.statusCode).toBe(403)
     })
@@ -356,8 +350,24 @@ describe('WordpressClient', () => {
 
   describe('fetchAll', () => {
     it('fetches all items across multiple pages', async () => {
-      const post1 = { id: 1, slug: 'post-1', title: { rendered: 'Post 1' }, content: { rendered: '' }, excerpt: { rendered: '' }, date: '2024-01-01T00:00:00', sticky: false }
-      const post2 = { id: 2, slug: 'post-2', title: { rendered: 'Post 2' }, content: { rendered: '' }, excerpt: { rendered: '' }, date: '2024-01-02T00:00:00', sticky: false }
+      const post1 = {
+        id: 1,
+        slug: 'post-1',
+        title: { rendered: 'Post 1' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+        date: '2024-01-01T00:00:00',
+        sticky: false,
+      }
+      const post2 = {
+        id: 2,
+        slug: 'post-2',
+        title: { rendered: 'Post 2' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+        date: '2024-01-02T00:00:00',
+        sticky: false,
+      }
 
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
@@ -395,9 +405,7 @@ describe('WordpressClient', () => {
       controller.abort()
 
       const client = createClient()
-      await expect(
-        client.posts({}, { signal: controller.signal }),
-      ).rejects.toThrow()
+      await expect(client.posts({}, { signal: controller.signal })).rejects.toThrow()
     })
   })
 

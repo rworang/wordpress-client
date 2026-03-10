@@ -1,4 +1,14 @@
-import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawMenuItem, RawNavigationMenu, RawAuthor, RawFeaturedMedia } from '../../src/types/raw'
+import type {
+  RawPost,
+  RawPage,
+  RawMedia,
+  RawCategory,
+  RawTag,
+  RawMenuItem,
+  RawNavigationMenu,
+  RawAuthor,
+  RawFeaturedMedia,
+} from '../../src/types/raw'
 
 export const rawAuthor: RawAuthor = {
   id: 1,
