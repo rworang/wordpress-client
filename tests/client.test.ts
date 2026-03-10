@@ -248,6 +248,22 @@ describe('WordpressClient', () => {
       expect(error.statusCode).toBe(403)
     })
 
+    it('preserves HTTP status code 403 in WordpressAuthError', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts/1`, () => {
+          return HttpResponse.json(
+            { code: 'rest_forbidden', message: 'Sorry, you are not allowed to read this post.' },
+            { status: 403 },
+          )
+        }),
+      )
+
+      const client = createClient()
+      const error = await client.postById(1).catch(e => e)
+      expect(error).toBeInstanceOf(WordpressAuthError)
+      expect(error.statusCode).toBe(403)
+    })
+
     it('throws WordpressValidationError for 400', async () => {
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
