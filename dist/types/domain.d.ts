@@ -71,6 +71,8 @@ export interface Post {
     /** ISO 8601 publication date */
     date: string;
     categories: Category[];
+    /** Tags associated with this post */
+    tags: Tag[];
     /** Whether this post is pinned/sticky */
     sticky: boolean;
 }
