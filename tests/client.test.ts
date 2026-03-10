@@ -136,6 +136,45 @@ describe('WordpressClient', () => {
     })
   })
 
+  describe('users', () => {
+    it('fetches paginated users', async () => {
+      const client = createClient()
+      const result = await client.users()
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].name).toBe('Jane Doe')
+      expect(result.pagination.total).toBe(1)
+    })
+
+    it('passes per_page param in request', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/users`, ({ request }) => {
+          const url = new URL(request.url)
+          expect(url.searchParams.get('per_page')).toBe('5')
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.users({ per_page: 5 })
+      expect(result.data).toHaveLength(0)
+    })
+
+    it('returns user by slug', async () => {
+      const client = createClient()
+      const author = await client.user('jane-doe')
+      expect(author).not.toBeNull()
+      expect(author!.name).toBe('Jane Doe')
+    })
+
+    it('returns null for non-existent user slug', async () => {
+      const client = createClient()
+      const author = await client.user('not-found')
+      expect(author).toBeNull()
+    })
+  })
+
   describe('media', () => {
     it('fetches media by ID', async () => {
       const client = createClient()
