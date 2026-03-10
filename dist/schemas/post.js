@@ -10,10 +10,12 @@ export const RawPostSchema = z.object({
     excerpt: z.object({ rendered: z.string() }),
     date: z.string(),
     sticky: z.boolean(),
-    _embedded: z.object({
+    _embedded: z
+        .object({
         'wp:featuredmedia': z.array(RawFeaturedMediaSchema).optional(),
         'wp:term': z.array(z.array(RawCategorySchema)).optional(),
         author: z.array(RawAuthorSchema).optional(),
-    }).optional(),
+    })
+        .optional(),
 });
 //# sourceMappingURL=post.js.map

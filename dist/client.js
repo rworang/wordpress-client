@@ -49,7 +49,7 @@ export class WordpressClient {
      *
      * @throws {Error} If baseURL is not provided
      */
-    constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache, }) {
+    constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache }) {
         if (!baseURL) {
             throw new Error('WordpressClient: baseURL is required');
         }
@@ -57,9 +57,7 @@ export class WordpressClient {
         const retryConfig = {
             retries: retry?.retries ?? 3,
             retryDelay: exponentialDelay,
-            retryCondition: (error) => isNetworkOrIdempotentRequestError(error) ||
-                error.response?.status === 408 ||
-                error.response?.status === 429,
+            retryCondition: (error) => isNetworkOrIdempotentRequestError(error) || error.response?.status === 408 || error.response?.status === 429,
         };
         const errorInterceptor = (error) => this.handleError(error);
         this.http = axios.create({
@@ -91,7 +89,10 @@ export class WordpressClient {
     async posts(params = {}, options) {
         const { page = 1, per_page = 10, ...rest } = params;
         const response = await this.dedupGet(this.http, '/posts', {
-            _embed: true, page, per_page, ...rest,
+            _embed: true,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toPost) };
@@ -109,7 +110,8 @@ export class WordpressClient {
      */
     async post(slug, options) {
         const response = await this.dedupGet(this.http, '/posts', {
-            slug, _embed: true,
+            slug,
+            _embed: true,
         }, options?.signal);
         return response.data.length ? toPost(response.data[0]) : null;
     }
@@ -134,7 +136,10 @@ export class WordpressClient {
     async pages(params = {}, options) {
         const { page = 1, per_page = 10, ...rest } = params;
         const response = await this.dedupGet(this.http, '/pages', {
-            _embed: true, page, per_page, ...rest,
+            _embed: true,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toPage) };
@@ -149,7 +154,8 @@ export class WordpressClient {
      */
     async page(slug, options) {
         const response = await this.dedupGet(this.http, '/pages', {
-            slug, _embed: true,
+            slug,
+            _embed: true,
         }, options?.signal);
         return response.data.length ? toPage(response.data[0]) : null;
     }
@@ -174,7 +180,9 @@ export class WordpressClient {
     async categories(params = {}, options) {
         const { page = 1, per_page = 100, ...rest } = params;
         const response = await this.dedupGet(this.http, '/categories', {
-            page, per_page, ...rest,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toCategory) };
@@ -200,7 +208,9 @@ export class WordpressClient {
     async tags(params = {}, options) {
         const { page = 1, per_page = 100, ...rest } = params;
         const response = await this.dedupGet(this.http, '/tags', {
-            page, per_page, ...rest,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toTag) };
@@ -235,7 +245,9 @@ export class WordpressClient {
     async mediaList(params = {}, options) {
         const { page = 1, per_page = 10, ...rest } = params;
         const response = await this.dedupGet(this.http, '/media', {
-            page, per_page, ...rest,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toMedia) };
@@ -251,7 +263,9 @@ export class WordpressClient {
     async menus(params = {}, options) {
         const { page = 1, per_page = 100, ...rest } = params;
         const response = await this.dedupGet(this.http, '/menus', {
-            page, per_page, ...rest,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toNavigationMenu) };
@@ -267,7 +281,9 @@ export class WordpressClient {
     async menuItems(params = {}, options) {
         const { page = 1, per_page = 100, ...rest } = params;
         const response = await this.dedupGet(this.http, '/menu-items', {
-            page, per_page, ...rest,
+            page,
+            per_page,
+            ...rest,
         }, options?.signal);
         const paginated = extractPagination(response, page, per_page);
         return { ...paginated, data: paginated.data.map(toMenuItem) };
@@ -351,9 +367,7 @@ export class WordpressClient {
             }
             if (status === 400) {
                 const params = data?.data?.params;
-                const details = params
-                    ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]]))
-                    : undefined;
+                const details = params ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]])) : undefined;
                 throw new WordpressValidationError(message, details);
             }
             throw new WordpressError(message, status, data?.code);
