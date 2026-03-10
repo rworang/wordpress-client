@@ -12,6 +12,7 @@ const MediaSizeSchema = z.object({
 export const RawMediaSchema = z.object({
   id: z.number(),
   guid: z.object({ rendered: z.string() }),
+  alt_text: z.string(),
   type: z.string(),
   description: z.object({ rendered: z.string() }),
   media_type: z.string(),

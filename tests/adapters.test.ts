@@ -44,6 +44,7 @@ describe('toMedia', () => {
     const result = toMedia(rawMedia)
     expect(result.id).toBe(10)
     expect(result.url).toBe('https://example.com/image.jpg')
+    expect(result.alt).toBe('Test image alt')
     expect(result.mimeType).toBe('image/jpeg')
     expect(result.width).toBe(1200)
     expect(result.height).toBe(800)

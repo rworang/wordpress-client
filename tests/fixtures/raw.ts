@@ -46,8 +46,9 @@ export const rawFeaturedMedia: RawFeaturedMedia = {
 export const rawMedia: RawMedia = {
   id: 10,
   guid: { rendered: 'https://example.com/image.jpg' },
+  alt_text: 'Test image alt',
   type: 'attachment',
-  description: { rendered: 'A test image' },
+  description: { rendered: 'A test image caption' },
   media_type: 'image',
   mime_type: 'image/jpeg',
   media_details: {
