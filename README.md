@@ -746,8 +746,6 @@ import {
   WordpressSchemaError,
 } from '@worang/wordpress-client'
 
-// Adapters (advanced use — transform raw WP responses into domain types)
-import { toPost, toMedia, toCategory, toAuthor } from '@worang/wordpress-client'
 ```
 
 ---
