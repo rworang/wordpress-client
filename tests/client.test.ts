@@ -191,8 +191,24 @@ describe('WordpressClient', () => {
 
       const client = createClient()
       await expect(
-        client.menus({ signal: controller.signal }),
+        client.menus({}, { signal: controller.signal }),
       ).rejects.toThrow()
+    })
+
+    it('passes per_page param to menus request', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/menus`, ({ request }) => {
+          const url = new URL(request.url)
+          expect(url.searchParams.get('per_page')).toBe('10')
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.menus({ per_page: 10 })
+      expect(result.data).toHaveLength(0)
     })
   })
 

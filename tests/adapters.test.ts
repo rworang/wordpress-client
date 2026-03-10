@@ -103,11 +103,19 @@ describe('toPost', () => {
     expect(result.sticky).toBe(false)
   })
 
+  it('populates tags from embedded wp:term[1]', () => {
+    const result = toPost(rawPost)
+    expect(result.tags).toHaveLength(1)
+    expect(result.tags[0].slug).toBe('javascript')
+    expect(result.tags[0].name).toBe('JavaScript')
+  })
+
   it('handles post without embedded data', () => {
     const { _embedded, ...postWithoutEmbedded } = rawPost
     const result = toPost(postWithoutEmbedded)
     expect(result.author).toEqual({ id: 0, name: '', url: '', description: '' })
     expect(result.categories).toEqual([])
+    expect(result.tags).toEqual([])
     expect(result.featuredMedia).toBeUndefined()
   })
 

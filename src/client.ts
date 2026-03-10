@@ -20,7 +20,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios'
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
 import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawMenuItem, RawNavigationMenu } from './types/raw'
 import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu } from './types/domain'
-import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams } from './types/params'
+import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams } from './types/params'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -317,11 +317,12 @@ export class WordpressClient {
    * @example
    * const { data: menus } = await client.menus()
    */
-  async menus(options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>> {
+  async menus(params: MenuQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>> {
+    const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawNavigationMenu[]>(this.http, '/menus', {
-      page: 1, per_page: 100,
+      page, per_page, ...rest,
     }, options?.signal)
-    const paginated = extractPagination(response, 1, 100)
+    const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toNavigationMenu) }
   }
 
