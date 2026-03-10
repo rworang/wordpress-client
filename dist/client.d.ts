@@ -15,8 +15,8 @@
  * // Filter posts by category
  * const { data: techPosts } = await client.posts({ categories: [3] })
  */
-import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu } from './types/domain';
-import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams } from './types/params';
+import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain';
+import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams, UsersQueryParams } from './types/params';
 import { type PaginatedResponse } from './utils/pagination';
 import { type CacheOptions } from './utils/cache';
 /**
@@ -149,6 +149,19 @@ export declare class WordpressClient {
      * @returns The tag, or null if not found
      */
     tag(slug: string, options?: RequestOptions): Promise<Tag | null>;
+    /**
+     * Fetch a paginated list of users.
+     *
+     * @example
+     * const { data: users } = await client.users()
+     */
+    users(params?: UsersQueryParams, options?: RequestOptions): Promise<PaginatedResponse<Author>>;
+    /**
+     * Fetch a single user by their username slug.
+     *
+     * @returns The author, or null if not found
+     */
+    user(slug: string, options?: RequestOptions): Promise<Author | null>;
     /**
      * Fetch a single media item by its numeric ID.
      *

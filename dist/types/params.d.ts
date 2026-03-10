@@ -138,6 +138,25 @@ export interface MenuItemQueryParams {
     /** Sort direction */
     order?: 'asc' | 'desc';
 }
+/** Query parameters for fetching users. */
+export interface UsersQueryParams {
+    /** Page number (1-indexed) - defaults to 1 */
+    page?: number;
+    /** Results per page - defaults to 10 */
+    per_page?: number;
+    /** Search term to filter users */
+    search?: string;
+    /** Filter by username slug(s) */
+    slug?: string | string[];
+    /** Field to sort by */
+    orderby?: 'id' | 'name' | 'registered_date';
+    /** Sort direction */
+    order?: 'asc' | 'desc';
+    /** Exclude users with these IDs */
+    exclude?: number[];
+    /** Include only users with these IDs */
+    include?: number[];
+}
 /** Query parameters for fetching navigation menus. */
 export interface MenuQueryParams {
     /** Page number (1-indexed) - defaults to 1 */
