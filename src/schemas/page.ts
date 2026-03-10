@@ -11,8 +11,10 @@ export const RawPageSchema = z.object({
   date: z.string(),
   parent: z.number(),
   menu_order: z.number(),
-  _embedded: z.object({
-    'wp:featuredmedia': z.array(RawFeaturedMediaSchema).optional(),
-    author: z.array(RawAuthorSchema).optional(),
-  }).optional(),
+  _embedded: z
+    .object({
+      'wp:featuredmedia': z.array(RawFeaturedMediaSchema).optional(),
+      author: z.array(RawAuthorSchema).optional(),
+    })
+    .optional(),
 })

@@ -15,16 +15,7 @@ export { WordpressClient } from './client'
 export type { WordpressClientOptions, RequestOptions } from './client'
 
 // Types
-export type {
-  Post,
-  Page,
-  Media,
-  Category,
-  Tag,
-  MenuItem,
-  NavigationMenu,
-  Author,
-} from './types/domain'
+export type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain'
 
 export type {
   PostQueryParams,
@@ -47,4 +38,3 @@ export {
   WordpressValidationError,
   WordpressSchemaError,
 } from './errors'
-

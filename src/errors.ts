@@ -31,7 +31,7 @@ export class WordpressError extends Error {
     /** HTTP status code from the API response */
     public readonly statusCode?: number,
     /** WordPress error code (e.g., 'rest_post_invalid_id') */
-    public readonly code?: string
+    public readonly code?: string,
   ) {
     super(message)
     this.name = 'WordpressError'
@@ -79,7 +79,7 @@ export class WordpressValidationError extends WordpressError {
   constructor(
     message: string,
     /** Map of field names to their validation error messages */
-    public readonly details?: Record<string, string[]>
+    public readonly details?: Record<string, string[]>,
   ) {
     super(message, 400, 'validation_error')
     this.name = 'WordpressValidationError'
@@ -95,7 +95,7 @@ export class WordpressSchemaError extends WordpressError {
   constructor(
     resource: string,
     /** Zod validation issues */
-    public readonly issues: Array<{ path: PropertyKey[]; message: string }>
+    public readonly issues: Array<{ path: PropertyKey[]; message: string }>,
   ) {
     super(`Invalid ${resource} response from API: ${issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')}`)
     this.name = 'WordpressSchemaError'
