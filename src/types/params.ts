@@ -143,3 +143,15 @@ export interface MenuItemQueryParams {
   /** Sort direction */
   order?: 'asc' | 'desc'
 }
+
+/** Query parameters for fetching navigation menus. */
+export interface MenuQueryParams {
+  /** Page number (1-indexed) - defaults to 1 */
+  page?: number
+  /** Results per page - defaults to 100 */
+  per_page?: number
+  /** Filter by exact slug */
+  slug?: string
+  /** Search term to filter menus */
+  search?: string
+}
