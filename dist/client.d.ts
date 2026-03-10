@@ -16,7 +16,7 @@
  * const { data: techPosts } = await client.posts({ categories: [3] })
  */
 import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu } from './types/domain';
-import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams } from './types/params';
+import type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams } from './types/params';
 import { type PaginatedResponse } from './utils/pagination';
 import { type CacheOptions } from './utils/cache';
 /**
@@ -169,7 +169,7 @@ export declare class WordpressClient {
      * @example
      * const { data: menus } = await client.menus()
      */
-    menus(options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>>;
+    menus(params?: MenuQueryParams, options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>>;
     /**
      * Fetch a paginated list of menu items, optionally filtered by menu.
      * Requires WP 5.9+ with the Menus REST API.
