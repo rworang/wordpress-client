@@ -42,7 +42,7 @@ export interface PaginatedResponse<T> {
 export function extractPagination<T>(
   response: AxiosResponse<T[]>,
   page: number = 1,
-  perPage: number = 10
+  perPage: number = 10,
 ): PaginatedResponse<T> {
   return {
     data: response.data,
@@ -66,9 +66,7 @@ export function extractPagination<T>(
  *
  * const allPosts = await fetchAll((page) => client.posts({ page, per_page: 100 }))
  */
-export async function fetchAll<T>(
-  fn: (page: number) => Promise<PaginatedResponse<T>>,
-): Promise<T[]> {
+export async function fetchAll<T>(fn: (page: number) => Promise<PaginatedResponse<T>>): Promise<T[]> {
   const first = await fn(1)
   const items = [...first.data]
   const { totalPages } = first.pagination
