@@ -70,7 +70,7 @@ export declare class WordpressClient {
      *
      * @throws {Error} If baseURL is not provided
      */
-    constructor({ baseURL, namespace, timeout, retry, cache, }: WordpressClientOptions);
+    constructor({ baseURL, namespace, timeout, retry, cache }: WordpressClientOptions);
     /**
      * Fetch a paginated list of posts.
      *
