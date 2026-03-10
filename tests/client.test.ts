@@ -243,7 +243,9 @@ describe('WordpressClient', () => {
       )
 
       const client = createClient()
-      await expect(client.posts()).rejects.toThrow(WordpressAuthError)
+      const error = await client.posts().catch(e => e)
+      expect(error).toBeInstanceOf(WordpressAuthError)
+      expect(error.statusCode).toBe(403)
     })
 
     it('throws WordpressValidationError for 400', async () => {

@@ -9,6 +9,7 @@
 export interface RawMedia {
   id: number
   guid: { rendered: string }
+  alt_text: string
   type: string
   description: { rendered: string }
   media_type: string

@@ -432,7 +432,7 @@ export class WordpressClient {
         throw new WordpressNotFoundError('Resource', requestUrl)
       }
       if (status === 401 || status === 403) {
-        throw new WordpressAuthError(message)
+        throw new WordpressAuthError(message, status)
       }
       if (status === 400) {
         const params = data?.data?.params
