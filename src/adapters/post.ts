@@ -12,6 +12,7 @@ import type { Post, Author } from '../types/domain'
 import { RawPostSchema } from '../schemas/post'
 import { WordpressSchemaError } from '../errors'
 import { toCategory } from './category'
+import { toTag } from './tag'
 import { toAuthor } from './author'
 import { toMediaFromFeatured } from './media'
 
@@ -26,6 +27,7 @@ export const toPost = (raw: RawPost): Post => {
 
   const media = raw._embedded?.['wp:featuredmedia']?.[0]
   const cats = raw._embedded?.['wp:term']?.[0] ?? []
+  const tags = raw._embedded?.['wp:term']?.[1] ?? []
   const author = raw._embedded?.['author']?.[0]
 
   return {
@@ -43,6 +45,7 @@ export const toPost = (raw: RawPost): Post => {
     featuredMedia: toMediaFromFeatured(media),
     date: raw.date,
     categories: cats.map(toCategory),
+    tags: tags.map(toTag),
     sticky: raw.sticky ?? false,
   }
 }
