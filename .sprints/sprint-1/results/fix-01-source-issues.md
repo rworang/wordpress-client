@@ -8,24 +8,24 @@
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| `src/index.ts` | Removed adapter export line and associated comment (lines 50–51) |
-| `src/client.ts` | Added `options?: RequestOptions` to `menus()` signature; pass `options?.signal` to `dedupGet` |
-| `src/schemas/index.ts` | Added 4 missing schema exports: `RawTagSchema`, `RawPageSchema`, `RawMenuItemSchema`, `RawNavigationMenuSchema` |
-| `src/adapters/media.ts` | Fixed unreachable optional chain: `raw.description?.rendered ?? ''` → `raw.description.rendered` |
-| `tests/client.test.ts` | Added abort signal test for `menus()` in the `describe('navigation'` block |
+| File                    | Change                                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`          | Removed adapter export line and associated comment (lines 50–51)                                                |
+| `src/client.ts`         | Added `options?: RequestOptions` to `menus()` signature; pass `options?.signal` to `dedupGet`                   |
+| `src/schemas/index.ts`  | Added 4 missing schema exports: `RawTagSchema`, `RawPageSchema`, `RawMenuItemSchema`, `RawNavigationMenuSchema` |
+| `src/adapters/media.ts` | Fixed unreachable optional chain: `raw.description?.rendered ?? ''` → `raw.description.rendered`                |
+| `tests/client.test.ts`  | Added abort signal test for `menus()` in the `describe('navigation'` block                                      |
 
 ---
 
 ## Test Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Total tests | 62 | 63 |
-| Passing | 62 | 63 |
-| Failing | 0 | 0 |
-| TypeScript errors | 0 | 0 |
+| Metric            | Before | After |
+| ----------------- | ------ | ----- |
+| Total tests       | 62     | 63    |
+| Passing           | 62     | 63    |
+| Failing           | 0      | 0     |
+| TypeScript errors | 0      | 0     |
 
 ---
 
@@ -34,9 +34,19 @@
 ### D1 — Remove adapter exports from public barrel
 
 Removed from `src/index.ts`:
+
 ```ts
 // Adapters (for advanced use cases)
-export { toPost, toPage, toMedia, toCategory, toTag, toMenuItem, toNavigationMenu, toAuthor } from './adapters'
+export {
+	toPost,
+	toPage,
+	toMedia,
+	toCategory,
+	toTag,
+	toMenuItem,
+	toNavigationMenu,
+	toAuthor,
+} from "./adapters"
 ```
 
 The public API now exposes only `WordpressClient`, domain types, query param types, errors, and `fetchAll`. Adapter functions remain internal, accessible only through `src/adapters/index.ts` (which is documented as `@internal`).
@@ -62,13 +72,11 @@ async menus(options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>
 One new test added to `tests/client.test.ts` inside `describe('navigation'`:
 
 ```ts
-it('aborts a menus request when signal is triggered', async () => {
-  const controller = new AbortController()
-  controller.abort()
-  const client = createClient()
-  await expect(
-    client.menus({ signal: controller.signal }),
-  ).rejects.toThrow()
+it("aborts a menus request when signal is triggered", async () => {
+	const controller = new AbortController()
+	controller.abort()
+	const client = createClient()
+	await expect(client.menus({ signal: controller.signal })).rejects.toThrow()
 })
 ```
 
@@ -77,13 +85,13 @@ it('aborts a menus request when signal is triggered', async () => {
 `src/schemas/index.ts` previously exported 5 of the defined schemas. After this fix all 9 named schemas are exported (note: the media schema file exports 2 schemas on one line, so the barrel has 7 export lines covering 9 schema names):
 
 ```ts
-export { RawAuthorSchema } from './author'
-export { RawCategorySchema } from './category'
-export { RawMediaSchema, RawFeaturedMediaSchema } from './media'
-export { RawMenuItemSchema, RawNavigationMenuSchema } from './navigation'
-export { RawPageSchema } from './page'
-export { RawPostSchema } from './post'
-export { RawTagSchema } from './tag'
+export { RawAuthorSchema } from "./author"
+export { RawCategorySchema } from "./category"
+export { RawMediaSchema, RawFeaturedMediaSchema } from "./media"
+export { RawMenuItemSchema, RawNavigationMenuSchema } from "./navigation"
+export { RawPageSchema } from "./page"
+export { RawPostSchema } from "./post"
+export { RawTagSchema } from "./tag"
 ```
 
 ### D4 — Fix unreachable optional chain in `toMedia`
