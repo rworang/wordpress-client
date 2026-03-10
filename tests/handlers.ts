@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { rawPost, rawPage, rawMedia, rawCategory, rawTag, rawNavigationMenu, rawMenuItem } from './fixtures/raw'
+import { rawPost, rawPage, rawMedia, rawCategory, rawTag, rawNavigationMenu, rawMenuItem, rawAuthor } from './fixtures/raw'
 
 const BASE = 'https://test.wp.com/wp-json'
 
@@ -86,6 +86,25 @@ export const handlers = [
     return HttpResponse.json([rawTag], {
       headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
     })
+  }),
+
+  // Users list
+  http.get(`${BASE}/wp/v2/users`, ({ request }) => {
+    const url = new URL(request.url)
+    const slug = url.searchParams.get('slug')
+
+    if (slug === 'not-found') {
+      return HttpResponse.json([])
+    }
+
+    return HttpResponse.json([rawAuthor], {
+      headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+    })
+  }),
+
+  // Single user by ID
+  http.get(`${BASE}/wp/v2/users/:id`, () => {
+    return HttpResponse.json(rawAuthor)
   }),
 
   // Media by ID
