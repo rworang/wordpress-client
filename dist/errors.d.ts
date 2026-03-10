@@ -57,7 +57,7 @@ export declare class WordpressNotFoundError extends WordpressError {
  * endpoints that require authentication.
  */
 export declare class WordpressAuthError extends WordpressError {
-    constructor(message?: string);
+    constructor(message?: string, statusCode?: number);
 }
 /**
  * Thrown when request parameters are invalid (400).

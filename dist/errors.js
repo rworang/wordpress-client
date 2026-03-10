@@ -63,8 +63,8 @@ export class WordpressNotFoundError extends WordpressError {
  * endpoints that require authentication.
  */
 export class WordpressAuthError extends WordpressError {
-    constructor(message = 'Authentication required') {
-        super(message, 401, 'unauthorized');
+    constructor(message = 'Authentication required', statusCode = 401) {
+        super(message, statusCode, 'unauthorized');
         this.name = 'WordpressAuthError';
     }
 }

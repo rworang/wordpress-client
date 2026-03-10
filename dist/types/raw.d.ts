@@ -10,6 +10,7 @@ export interface RawMedia {
     guid: {
         rendered: string;
     };
+    alt_text: string;
     type: string;
     description: {
         rendered: string;
