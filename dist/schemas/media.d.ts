@@ -4,6 +4,7 @@ export declare const RawMediaSchema: z.ZodObject<{
     guid: z.ZodObject<{
         rendered: z.ZodString;
     }, z.core.$strip>;
+    alt_text: z.ZodString;
     type: z.ZodString;
     description: z.ZodObject<{
         rendered: z.ZodString;
