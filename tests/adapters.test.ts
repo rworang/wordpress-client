@@ -52,6 +52,12 @@ describe('toMedia', () => {
     expect(result.sizes.thumbnail.width).toBe(150)
   })
 
+  it('reads alt from alt_text not description.rendered', () => {
+    const result = toMedia(rawMedia)
+    expect(result.alt).toBe(rawMedia.alt_text)
+    expect(result.alt).not.toBe(rawMedia.description.rendered)
+  })
+
   it('throws WordpressSchemaError for invalid input', () => {
     expect(() => toMedia({ id: 'bad' } as any)).toThrow(WordpressSchemaError)
   })
