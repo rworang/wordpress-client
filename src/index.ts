@@ -32,6 +32,7 @@ export type {
   TaxonomyQueryParams,
   MediaQueryParams,
   MenuItemQueryParams,
+  MenuQueryParams,
 } from './types/params'
 
 export type { PaginatedResponse } from './utils/pagination'
