@@ -78,7 +78,7 @@ export const rawPost: RawPost = {
   sticky: false,
   _embedded: {
     'wp:featuredmedia': [rawFeaturedMedia],
-    'wp:term': [[rawCategory]],
+    'wp:term': [[rawCategory], [rawTag]],
     author: [rawAuthor],
   },
 }
