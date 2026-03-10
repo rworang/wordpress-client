@@ -24,6 +24,7 @@ export type {
   MediaQueryParams,
   MenuItemQueryParams,
   MenuQueryParams,
+  UsersQueryParams,
 } from './types/params'
 
 export type { PaginatedResponse } from './utils/pagination'
