@@ -23,6 +23,7 @@ import { toMedia } from './adapters/media';
 import { toCategory } from './adapters/category';
 import { toTag } from './adapters/tag';
 import { toMenuItem, toNavigationMenu } from './adapters/navigation';
+import { toAuthor } from './adapters/author';
 import { extractPagination } from './utils/pagination';
 import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors';
 import { dedup } from './utils/dedup';
@@ -225,6 +226,34 @@ export class WordpressClient {
             slug,
         }, options?.signal);
         return response.data.length ? toTag(response.data[0]) : null;
+    }
+    // ---- Users ----
+    /**
+     * Fetch a paginated list of users.
+     *
+     * @example
+     * const { data: users } = await client.users()
+     */
+    async users(params = {}, options) {
+        const { page = 1, per_page = 10, ...rest } = params;
+        const response = await this.dedupGet(this.http, '/users', {
+            page,
+            per_page,
+            ...rest,
+        }, options?.signal);
+        const paginated = extractPagination(response, page, per_page);
+        return { ...paginated, data: paginated.data.map(toAuthor) };
+    }
+    /**
+     * Fetch a single user by their username slug.
+     *
+     * @returns The author, or null if not found
+     */
+    async user(slug, options) {
+        const response = await this.dedupGet(this.http, '/users', {
+            slug,
+        }, options?.signal);
+        return response.data.length ? toAuthor(response.data[0]) : null;
     }
     // ---- Media ----
     /**

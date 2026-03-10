@@ -12,7 +12,7 @@
 export { WordpressClient } from './client';
 export type { WordpressClientOptions, RequestOptions } from './client';
 export type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain';
-export type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams, } from './types/params';
+export type { PostQueryParams, PageQueryParams, TaxonomyQueryParams, MediaQueryParams, MenuItemQueryParams, MenuQueryParams, UsersQueryParams, } from './types/params';
 export type { PaginatedResponse } from './utils/pagination';
 export { fetchAll } from './utils/pagination';
 export type { CacheOptions } from './utils/cache';
