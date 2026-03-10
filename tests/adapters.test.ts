@@ -18,6 +18,7 @@ describe('toAuthor', () => {
   })
 
   it('throws WordpressSchemaError for invalid input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => toAuthor({ id: 'bad' } as any)).toThrow(WordpressSchemaError)
   })
 })
@@ -35,6 +36,7 @@ describe('toCategory', () => {
   })
 
   it('throws WordpressSchemaError for invalid input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => toCategory({ id: 'bad' } as any)).toThrow(WordpressSchemaError)
   })
 })
@@ -59,6 +61,7 @@ describe('toMedia', () => {
   })
 
   it('throws WordpressSchemaError for invalid input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => toMedia({ id: 'bad' } as any)).toThrow(WordpressSchemaError)
   })
 })
@@ -81,12 +84,15 @@ describe('toMediaFromFeatured', () => {
   })
 
   it('throws WordpressSchemaError for invalid featured media', () => {
-    expect(() => toMediaFromFeatured({
-      id: 'bad',
-      source_url: '',
-      alt_text: '',
-      media_details: { width: 0, height: 0, sizes: {} },
-    } as any)).toThrow(WordpressSchemaError)
+    expect(() =>
+      toMediaFromFeatured({
+        id: 'bad',
+        source_url: '',
+        alt_text: '',
+        media_details: { width: 0, height: 0, sizes: {} },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any),
+    ).toThrow(WordpressSchemaError)
   })
 })
 
@@ -111,6 +117,7 @@ describe('toPost', () => {
   })
 
   it('handles post without embedded data', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _embedded, ...postWithoutEmbedded } = rawPost
     const result = toPost(postWithoutEmbedded)
     expect(result.author).toEqual({ id: 0, name: '', url: '', description: '' })
@@ -120,6 +127,7 @@ describe('toPost', () => {
   })
 
   it('throws WordpressSchemaError for invalid input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => toPost({ id: 'bad' } as any)).toThrow(WordpressSchemaError)
   })
 })

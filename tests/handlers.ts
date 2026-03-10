@@ -27,10 +27,7 @@ export const handlers = [
   // Single post by ID
   http.get(`${BASE}/wp/v2/posts/:id`, ({ params }) => {
     if (params.id === '999') {
-      return HttpResponse.json(
-        { code: 'rest_post_invalid_id', message: 'Invalid post ID.' },
-        { status: 404 },
-      )
+      return HttpResponse.json({ code: 'rest_post_invalid_id', message: 'Invalid post ID.' }, { status: 404 })
     }
     return HttpResponse.json(rawPost)
   }),
@@ -58,10 +55,7 @@ export const handlers = [
   // Single page by ID
   http.get(`${BASE}/wp/v2/pages/:id`, ({ params }) => {
     if (params.id === '999') {
-      return HttpResponse.json(
-        { code: 'rest_post_invalid_id', message: 'Invalid page ID.' },
-        { status: 404 },
-      )
+      return HttpResponse.json({ code: 'rest_post_invalid_id', message: 'Invalid page ID.' }, { status: 404 })
     }
     return HttpResponse.json(rawPage)
   }),
@@ -97,10 +91,7 @@ export const handlers = [
   // Media by ID
   http.get(`${BASE}/wp/v2/media/:id`, ({ params }) => {
     if (params.id === '999') {
-      return HttpResponse.json(
-        { code: 'rest_post_invalid_id', message: 'Invalid media ID.' },
-        { status: 404 },
-      )
+      return HttpResponse.json({ code: 'rest_post_invalid_id', message: 'Invalid media ID.' }, { status: 404 })
     }
     return HttpResponse.json(rawMedia)
   }),

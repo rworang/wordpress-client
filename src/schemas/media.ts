@@ -34,10 +34,12 @@ export const RawFeaturedMediaSchema = z.object({
   source_url: z.string(),
   alt_text: z.string(),
   mime_type: z.string().optional(),
-  media_details: z.object({
-    width: z.number(),
-    height: z.number(),
-    filesize: z.number().optional(),
-    sizes: z.record(z.string(), FeaturedMediaSizeSchema),
-  }).optional(),
+  media_details: z
+    .object({
+      width: z.number(),
+      height: z.number(),
+      filesize: z.number().optional(),
+      sizes: z.record(z.string(), FeaturedMediaSizeSchema),
+    })
+    .optional(),
 })
