@@ -24,22 +24,31 @@ Skills are loaded by prepending a skill file to the LLM's prompt context. Each s
 defines a role the LLM assumes for that session. The pipeline flows:
 
 ```
-assessor → advisor → designer → planner → orchestrator → implementer
-                                               ↕               ↕
-                                         auditor (cross-cutting health checks)
-                                         documenter (cross-cutting doc updates)
+scout → assessor → advisor → designer → planner → orchestrator → implementer
+                                                       ↕               ↕
+                                                 auditor (cross-cutting health checks)
+                                                 documenter (cross-cutting doc updates)
 ```
 
-| #   | Skill            | Role              | When to Load                                             |
-| --- | ---------------- | ----------------- | -------------------------------------------------------- |
-| 1   | **Assessor**     | Discovery analyst | Starting a new project or major initiative               |
-| 2   | **Advisor**      | Trade-off analyst | Decision points before planning or implementation        |
-| 3   | **Designer**     | Structure author  | Translating decisions into module layouts and interfaces |
-| 4   | **Planner**      | Block sequencer   | Decomposing work into ordered, dependency-mapped blocks  |
-| 5   | **Orchestrator** | Prompt author     | Writing block prompts for the implementer to execute     |
-| 6   | **Implementer**  | Code producer     | Executing a scoped block prompt on a branch              |
-| 7   | **Auditor**      | Health checker    | Mid-build checks; post-block integrity verification      |
-| 8   | **Documenter**   | Technical writer  | Updating docs to reflect current codebase state          |
+| #   | Skill            | Role                | When to Load                                             |
+| --- | ---------------- | ------------------- | -------------------------------------------------------- |
+| 0   | **Scout**        | Exploration analyst | Researching external tools, APIs, or vague ideas         |
+| 1   | **Assessor**     | Discovery analyst   | Starting a new project or major initiative               |
+| 2   | **Advisor**      | Trade-off analyst   | Decision points before planning or implementation        |
+| 3   | **Designer**     | Structure author    | Translating decisions into module layouts and interfaces |
+| 4   | **Planner**      | Block sequencer     | Decomposing work into ordered, dependency-mapped blocks  |
+| 5   | **Orchestrator** | Prompt author       | Writing block prompts for the implementer to execute     |
+| 6   | **Implementer**  | Code producer       | Executing a scoped block prompt on a branch              |
+| 7   | **Auditor**      | Health checker      | Mid-build checks; post-block integrity verification      |
+| 8   | **Documenter**   | Technical writer    | Updating docs to reflect current codebase state          |
+
+### Domain Skills (loaded alongside pipeline skills)
+
+| Skill                | Role              | When to Load                                              |
+| -------------------- | ----------------- | --------------------------------------------------------- |
+| **Frontend Design**  | Design specialist | UI implementation — typography, color, layout, motion     |
+| **Threat Modeler**   | Threat analyst    | STRIDE analysis, attack surface mapping, trust boundaries |
+| **Security Auditor** | Security reviewer | OWASP Top 10, code-level security review, dependencies    |
 
 ---
 
@@ -47,7 +56,7 @@ assessor → advisor → designer → planner → orchestrator → implementer
 
 Prepend the skill file to your prompt context before giving the LLM its task:
 
-1. Open `skills/project/<skill-name>.md` or `skills/ops/<skill-name>.md`
+1. Open `skills/project/<skill-name>.md`, `skills/domain/<skill-name>.md`, or `skills/ops/<skill-name>.md`
 2. Paste its contents at the top of your prompt (or attach as context)
 3. Then give the task
 
@@ -76,7 +85,8 @@ Now execute this block prompt:
 │   │   ├── conductor.md              ← Multi-session coordination
 │   │   └── retrospector.md           ← Process data extraction & analysis
 │   ├── project/                      ← Software development pipeline
-│   │   ├── 00-initiator.md
+│   │   ├── 00-initiator.md            ← Sprint scaffolding
+│   │   ├── 00-scout.md                ← External research & exploration
 │   │   ├── 01-assessor.md
 │   │   ├── 02-advisor.md
 │   │   ├── 03-designer.md
@@ -85,10 +95,20 @@ Now execute this block prompt:
 │   │   ├── 06-implementer.md
 │   │   ├── 07-auditor.md
 │   │   └── 08-documenter.md
+│   ├── domain/                       ← Domain-specific skills (not pipeline-numbered)
+│   │   ├── frontend-design.md         ← Typography, color, layout, motion, UX writing
+│   │   ├── threat-modeler.md          ← STRIDE threat modeling & attack surface analysis
+│   │   └── security-auditor.md        ← OWASP security review & dependency scanning
 │   └── ops/                          ← VPS and infrastructure management
+│       ├── 00-debugger.md             ← Issue diagnosis & debugging
 │       ├── 01-vps-auditor.md
 │       ├── 02-vps-hardening.md
 │       └── 03-vps-deploy.md
+├── agents/                           ← Domain-expertise personas (11 agents)
+│   ├── README.md                      ← Pipeline alignment table & usage guide
+│   ├── backend-architect.md
+│   ├── security-engineer.md
+│   └── ...                            ← See agents/README.md for full list
 └── references/
     ├── claude-directory-standard.md  ← Canonical .claude/ structure specification
     ├── context-protocol.md           ← Session start/end context management contract
@@ -98,7 +118,12 @@ Now execute this block prompt:
     ├── block-prompt-template.md      ← How to structure a block prompt
     ├── result-summary-template.md    ← Standardized output template for all skills
     ├── verification-checklist.md     ← Standard verification steps for every block
-    └── coverage-tracker-template.md  ← How the coverage tracker works
+    ├── coverage-tracker-template.md  ← How the coverage tracker works
+    ├── output-locations.md           ← Canonical output locations for all skills
+    ├── skill-common-sections.md      ← Required sections in every skill file
+    ├── model-tiers.md                ← Model selection & token conservation
+    ├── project-memory-template.md    ← Template for CLAUDE.md project memory
+    └── design/                       ← Design reference files (7 files)
 ```
 
 ---
@@ -121,6 +146,7 @@ All skill outputs MUST be written to `.sprints/{sprint-name}/` in the project ro
 
 | Skill         | Output path                                            |
 | ------------- | ------------------------------------------------------ |
+| Scout         | `.sprints/{sprint}/process/`                           |
 | Assessor      | `.sprints/{sprint}/assessment/`                        |
 | Advisor       | `.sprints/{sprint}/assessment/`                        |
 | Designer      | `.sprints/{sprint}/design/`                            |

@@ -2,7 +2,7 @@
 
 **Sprint:** sprint-2
 **Started:** 2026-03-10
-**Last updated:** 2026-03-10 (block-05 complete)
+**Last updated:** 2026-03-10 (audit-post-sprint-2 complete)
 
 ---
 
@@ -22,6 +22,14 @@
 - ✅ Complete — branch merged, result summary committed
 - 🔄 In progress — branch exists, not yet merged
 - ⬜ Not started — block defined but not yet prompted
+
+---
+
+## Audit
+
+| Audit               | Report                               | Status    | Key Findings                                                                                                                       |
+| ------------------- | ------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| audit-post-sprint-2 | [🟡](results/audit-post-sprint-2.md) | 🟡 Yellow | P1: format:check fails (2 files); P1: README Limitations stale (Users/Tags/Pages); P2: dead MSW handler, doc gaps, cache type cast |
 
 ---
 

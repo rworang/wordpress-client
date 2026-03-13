@@ -14,20 +14,20 @@ _None. This block involved documentation and config changes only._
 
 ## Files Modified
 
-| File | Change summary |
-|------|---------------|
-| `README.md` | Removed "Adapters" import block from the Exports section (`toPost`, `toMedia`, `toCategory`, `toAuthor` — not public exports, marked `@internal`) |
-| `vitest.config.ts` | Added `coverage` block with `provider: 'v8'` and `reporter: ['text', 'lcov']` |
-| `package.json` | Added `"coverage": "vitest run --coverage"` script; added `"@vitest/coverage-v8": "latest"` to `devDependencies` |
-| `pnpm-lock.yaml` | Updated lockfile after `pnpm install` to record `@vitest/coverage-v8 4.0.18` and its 18 transitive deps |
+| File               | Change summary                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`        | Removed "Adapters" import block from the Exports section (`toPost`, `toMedia`, `toCategory`, `toAuthor` — not public exports, marked `@internal`) |
+| `vitest.config.ts` | Added `coverage` block with `provider: 'v8'` and `reporter: ['text', 'lcov']`                                                                     |
+| `package.json`     | Added `"coverage": "vitest run --coverage"` script; added `"@vitest/coverage-v8": "latest"` to `devDependencies`                                  |
+| `pnpm-lock.yaml`   | Updated lockfile after `pnpm install` to record `@vitest/coverage-v8 4.0.18` and its 18 transitive deps                                           |
 
 ## Test Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Total tests | 67 | 67 |
-| Passing | 67 | 67 |
-| Failing | 0 | 0 |
+| Metric      | Before | After |
+| ----------- | ------ | ----- |
+| Total tests | 67     | 67    |
+| Passing     | 67     | 67    |
+| Failing     | 0      | 0     |
 
 ### New Tests Added
 
@@ -39,21 +39,21 @@ _None._
 
 ## Design Decisions Made
 
-| Decision | Rationale | Alternatives considered |
-|----------|-----------|------------------------|
-| Did not add coverage thresholds | Block prompt explicitly says "do not add thresholds" — goal is to make coverage available, not gate CI | Could have added `lines: 80` etc., but that would violate the spec |
-| `@vitest/coverage-v8": "latest"` version specifier | Block prompt specifies `"latest"` explicitly; installed as `4.0.18` matching the `vitest` version already in devDependencies | Pinning to `^4.0.18` was considered but prompt prescribed `"latest"` |
+| Decision                                              | Rationale                                                                                                                                                                        | Alternatives considered                                                 |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Did not add coverage thresholds                       | Block prompt explicitly says "do not add thresholds" — goal is to make coverage available, not gate CI                                                                           | Could have added `lines: 80` etc., but that would violate the spec      |
+| `@vitest/coverage-v8": "latest"` version specifier    | Block prompt specifies `"latest"` explicitly; installed as `4.0.18` matching the `vitest` version already in devDependencies                                                     | Pinning to `^4.0.18` was considered but prompt prescribed `"latest"`    |
 | Left `toMediaFromFeatured()` mention in Version Notes | This is not in the removal list (`toPost`, `toMedia`, `toCategory`, `toAuthor`, `toTag`); it is an internal helper referenced only in a changelog note, not as an import example | Removing it would change the documented changelog without justification |
 
 ## Specific Values Changed
 
-| Item | Before | After |
-|------|--------|--------|
-| README Exports section — Adapters comment | `// Adapters (advanced use — transform raw WP responses into domain types)` | Removed |
-| README Exports section — Adapters import | `import { toPost, toMedia, toCategory, toAuthor } from '@worang/wordpress-client'` | Removed |
-| `vitest.config.ts` — test config | No coverage block | `coverage: { provider: 'v8', reporter: ['text', 'lcov'] }` |
-| `package.json` scripts | No `coverage` script | `"coverage": "vitest run --coverage"` |
-| `package.json` devDependencies | No `@vitest/coverage-v8` | `"@vitest/coverage-v8": "latest"` |
+| Item                                      | Before                                                                             | After                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| README Exports section — Adapters comment | `// Adapters (advanced use — transform raw WP responses into domain types)`        | Removed                                                    |
+| README Exports section — Adapters import  | `import { toPost, toMedia, toCategory, toAuthor } from '@worang/wordpress-client'` | Removed                                                    |
+| `vitest.config.ts` — test config          | No coverage block                                                                  | `coverage: { provider: 'v8', reporter: ['text', 'lcov'] }` |
+| `package.json` scripts                    | No `coverage` script                                                               | `"coverage": "vitest run --coverage"`                      |
+| `package.json` devDependencies            | No `@vitest/coverage-v8`                                                           | `"@vitest/coverage-v8": "latest"`                          |
 
 ## `pnpm coverage` Output
 

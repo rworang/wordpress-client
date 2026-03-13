@@ -14,22 +14,22 @@ None. All changes were additions to existing files.
 
 ## Files Modified
 
-| File | Change summary |
-|------|---------------|
-| `src/types/params.ts` | Added `UsersQueryParams` interface with 8 optional fields |
-| `src/client.ts` | Added `RawAuthor` and `Author` type imports, `UsersQueryParams` import, `toAuthor` adapter import, and `users()` / `user()` methods in a new `// ---- Users ----` section |
-| `src/index.ts` | Added `UsersQueryParams` to the params re-export block |
-| `tests/handlers.ts` | Added `rawAuthor` import and two MSW handlers: `GET /wp/v2/users` (with `slug=not-found` filtering) and `GET /wp/v2/users/:id` |
-| `tests/client.test.ts` | Added `users` describe block with 4 tests |
-| `README.md` | Added `fetchAll(fn)` subsection within Section 8 (Pagination) |
+| File                   | Change summary                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/params.ts`  | Added `UsersQueryParams` interface with 8 optional fields                                                                                                                 |
+| `src/client.ts`        | Added `RawAuthor` and `Author` type imports, `UsersQueryParams` import, `toAuthor` adapter import, and `users()` / `user()` methods in a new `// ---- Users ----` section |
+| `src/index.ts`         | Added `UsersQueryParams` to the params re-export block                                                                                                                    |
+| `tests/handlers.ts`    | Added `rawAuthor` import and two MSW handlers: `GET /wp/v2/users` (with `slug=not-found` filtering) and `GET /wp/v2/users/:id`                                            |
+| `tests/client.test.ts` | Added `users` describe block with 4 tests                                                                                                                                 |
+| `README.md`            | Added `fetchAll(fn)` subsection within Section 8 (Pagination)                                                                                                             |
 
 ## Test Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Total tests | 67 | 71 |
-| Passing | 67 | 71 |
-| Failing | 0 | 0 |
+| Metric      | Before | After |
+| ----------- | ------ | ----- |
+| Total tests | 67     | 71    |
+| Passing     | 67     | 71    |
+| Failing     | 0      | 0     |
 
 ### New Tests Added
 
@@ -44,18 +44,18 @@ None.
 
 ## Design Decisions Made
 
-| Decision | Rationale | Alternatives considered |
-|----------|-----------|------------------------|
-| Placed `users()` / `user()` between Tags and Media sections | Block prompt suggested "near categories/tags"; Tags is the nearest adjacent section | Could have placed after Media, but Tags is a closer semantic match (both are simple flat resources) |
-| `user(slug)` passes `slug` as a query param (not URL path segment) | Matches `post(slug)`, `category(slug)`, `tag(slug)` pattern exactly — `/users?slug=x` not `/users/x` | `/users/:id` is for numeric ID lookup; slug filtering uses the list endpoint |
-| No deviation from `posts()` / `post()` pattern | Block prompt explicitly called this out as the model to follow | None needed |
+| Decision                                                           | Rationale                                                                                            | Alternatives considered                                                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Placed `users()` / `user()` between Tags and Media sections        | Block prompt suggested "near categories/tags"; Tags is the nearest adjacent section                  | Could have placed after Media, but Tags is a closer semantic match (both are simple flat resources) |
+| `user(slug)` passes `slug` as a query param (not URL path segment) | Matches `post(slug)`, `category(slug)`, `tag(slug)` pattern exactly — `/users?slug=x` not `/users/x` | `/users/:id` is for numeric ID lookup; slug filtering uses the list endpoint                        |
+| No deviation from `posts()` / `post()` pattern                     | Block prompt explicitly called this out as the model to follow                                       | None needed                                                                                         |
 
 ## Issues Encountered
 
-| Issue | Resolution |
-|-------|-----------|
-| `RawAuthor` has no `slug` field | Not a problem — `user(slug)` passes `slug` as a query param to the API, which filters server-side. The fixture returns correctly for any non-`not-found` slug. |
-| README Limitations section lists "Users" and "Tags" as unsupported despite both being implemented | Out of scope for this block; noted here for a future cleanup pass |
+| Issue                                                                                             | Resolution                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RawAuthor` has no `slug` field                                                                   | Not a problem — `user(slug)` passes `slug` as a query param to the API, which filters server-side. The fixture returns correctly for any non-`not-found` slug. |
+| README Limitations section lists "Users" and "Tags" as unsupported despite both being implemented | Out of scope for this block; noted here for a future cleanup pass                                                                                              |
 
 ## Verification Checklist
 

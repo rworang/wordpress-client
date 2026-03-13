@@ -18,7 +18,16 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
-import type { RawPost, RawPage, RawMedia, RawCategory, RawTag, RawMenuItem, RawNavigationMenu, RawAuthor } from './types/raw'
+import type {
+  RawPost,
+  RawPage,
+  RawMedia,
+  RawCategory,
+  RawTag,
+  RawMenuItem,
+  RawNavigationMenu,
+  RawAuthor,
+} from './types/raw'
 import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain'
 import type {
   PostQueryParams,

@@ -1,5 +1,14 @@
 import { http, HttpResponse } from 'msw'
-import { rawPost, rawPage, rawMedia, rawCategory, rawTag, rawNavigationMenu, rawMenuItem, rawAuthor } from './fixtures/raw'
+import {
+  rawPost,
+  rawPage,
+  rawMedia,
+  rawCategory,
+  rawTag,
+  rawNavigationMenu,
+  rawMenuItem,
+  rawAuthor,
+} from './fixtures/raw'
 
 const BASE = 'https://test.wp.com/wp-json'
 
