@@ -30,9 +30,9 @@ Or add to `package.json`:
 
 ```json
 {
-	"dependencies": {
-		"@worang/wordpress-client": "github:rworang/wordpress-client"
-	}
+  "dependencies": {
+    "@worang/wordpress-client": "github:rworang/wordpress-client"
+  }
 }
 ```
 
@@ -49,54 +49,51 @@ Or add to `package.json`:
 ### Minimal example
 
 ```typescript
-import { WordpressClient } from "@worang/wordpress-client"
+import { WordpressClient } from '@worang/wordpress-client'
 
-const client = new WordpressClient({ baseURL: "https://your-site.com" })
+const client = new WordpressClient({ baseURL: 'https://your-site.com' })
 const { data: posts } = await client.posts({ per_page: 5 })
 ```
 
 ### Realistic usage
 
 ```typescript
-import {
-	WordpressClient,
-	WordpressNotFoundError,
-} from "@worang/wordpress-client"
-import type { Post, PaginatedResponse } from "@worang/wordpress-client"
+import { WordpressClient, WordpressNotFoundError } from '@worang/wordpress-client'
+import type { Post, PaginatedResponse } from '@worang/wordpress-client'
 
 const client = new WordpressClient({
-	baseURL: "https://your-site.com",
-	timeout: 5000,
-	retry: { retries: 2 },
-	cache: { ttl: 30_000 },
+  baseURL: 'https://your-site.com',
+  timeout: 5000,
+  retry: { retries: 2 },
+  cache: { ttl: 30_000 },
 })
 
 // List posts filtered by category
 const { data: posts, pagination } = await client.posts({
-	categories: [5],
-	per_page: 12,
-	orderby: "date",
-	order: "desc",
+  categories: [5],
+  per_page: 12,
+  orderby: 'date',
+  order: 'desc',
 })
 
 console.log(`Showing ${posts.length} of ${pagination.total} posts`)
 console.log(`Page ${pagination.page} of ${pagination.totalPages}`)
 
 // Get a single post by slug
-const post = await client.post("hello-world")
+const post = await client.post('hello-world')
 if (post) {
-	console.log(post.title)
-	console.log(post.author.name)
-	console.log(post.featuredMedia?.sizes["medium"]?.url)
+  console.log(post.title)
+  console.log(post.author.name)
+  console.log(post.featuredMedia?.sizes['medium']?.url)
 }
 
 // Get a single post by ID (throws if not found)
 try {
-	const postById = await client.postById(42)
+  const postById = await client.postById(42)
 } catch (err) {
-	if (err instanceof WordpressNotFoundError) {
-		console.log("Post does not exist")
-	}
+  if (err instanceof WordpressNotFoundError) {
+    console.log('Post does not exist')
+  }
 }
 ```
 
@@ -108,31 +105,31 @@ try {
 
 ```typescript
 interface WordpressClientOptions {
-	/** Base URL of the WordPress site (required) */
-	baseURL: string
+  /** Base URL of the WordPress site (required) */
+  baseURL: string
 
-	/** REST API namespace — defaults to 'wp/v2' */
-	namespace?: string
+  /** REST API namespace — defaults to 'wp/v2' */
+  namespace?: string
 
-	/** Request timeout in milliseconds — defaults to 10000 */
-	timeout?: number
+  /** Request timeout in milliseconds — defaults to 10000 */
+  timeout?: number
 
-	/** Retry configuration for transient failures */
-	retry?: {
-		/** Number of retry attempts — defaults to 3 */
-		retries?: number
-	}
+  /** Retry configuration for transient failures */
+  retry?: {
+    /** Number of retry attempts — defaults to 3 */
+    retries?: number
+  }
 
-	/** Response cache configuration. Set to false to disable caching entirely. */
-	cache?: CacheOptions | false
+  /** Response cache configuration. Set to false to disable caching entirely. */
+  cache?: CacheOptions | false
 }
 
 interface CacheOptions {
-	/** Time-to-live in milliseconds — defaults to 60_000 (60s) */
-	ttl?: number
+  /** Time-to-live in milliseconds — defaults to 60_000 (60s) */
+  ttl?: number
 
-	/** Maximum number of cached entries — defaults to 100 */
-	maxEntries?: number
+  /** Maximum number of cached entries — defaults to 100 */
+  maxEntries?: number
 }
 ```
 
@@ -225,10 +222,10 @@ async posts(params?: PostQueryParams): Promise<PaginatedResponse<Post>>
 
 ```typescript
 const { data, pagination } = await client.posts({
-	categories: [5],
-	per_page: 12,
-	orderby: "date",
-	order: "desc",
+  categories: [5],
+  per_page: 12,
+  orderby: 'date',
+  order: 'desc',
 })
 ```
 
@@ -245,9 +242,9 @@ async post(slug: string): Promise<Post | null>
 ```
 
 ```typescript
-const post = await client.post("hello-world")
+const post = await client.post('hello-world')
 if (post) {
-	console.log(post.title)
+  console.log(post.title)
 }
 ```
 
@@ -283,8 +280,8 @@ async categories(params?: TaxonomyQueryParams): Promise<PaginatedResponse<Catego
 
 ```typescript
 const { data: categories } = await client.categories({
-	hide_empty: true,
-	orderby: "name",
+  hide_empty: true,
+  orderby: 'name',
 })
 ```
 
@@ -299,7 +296,7 @@ async category(slug: string): Promise<Category | null>
 ```
 
 ```typescript
-const cat = await client.category("tech-news")
+const cat = await client.category('tech-news')
 ```
 
 ---
@@ -315,7 +312,7 @@ async media(id: number): Promise<Media>
 ```typescript
 const image = await client.media(123)
 console.log(image.url) // Full-size URL
-console.log(image.sizes["thumbnail"]?.url) // Thumbnail variant
+console.log(image.sizes['thumbnail']?.url) // Thumbnail variant
 ```
 
 **Error cases:** Throws `WordpressNotFoundError` if the media item does not exist.
@@ -334,8 +331,8 @@ async mediaList(params?: MediaQueryParams): Promise<PaginatedResponse<Media>>
 
 ```typescript
 const { data: images } = await client.mediaList({
-	media_type: "image",
-	per_page: 20,
+  media_type: 'image',
+  per_page: 20,
 })
 ```
 
@@ -437,8 +434,8 @@ Base class for any WordPress API failure.
 
 ```typescript
 class WordpressError extends Error {
-	readonly statusCode?: number // HTTP status code
-	readonly code?: string // WordPress error code (e.g., 'rest_post_invalid_id')
+  readonly statusCode?: number // HTTP status code
+  readonly code?: string // WordPress error code (e.g., 'rest_post_invalid_id')
 }
 ```
 
@@ -450,8 +447,8 @@ Thrown when a resource returns HTTP 404.
 
 ```typescript
 class WordpressNotFoundError extends WordpressError {
-	// statusCode: 404
-	// code: 'not_found'
+  // statusCode: 404
+  // code: 'not_found'
 }
 ```
 
@@ -465,8 +462,8 @@ Thrown when the API responds with HTTP 401 or 403.
 
 ```typescript
 class WordpressAuthError extends WordpressError {
-	// statusCode: 401
-	// code: 'unauthorized'
+  // statusCode: 401
+  // code: 'unauthorized'
 }
 ```
 
@@ -478,9 +475,9 @@ Thrown for HTTP 400 responses indicating invalid request parameters.
 
 ```typescript
 class WordpressValidationError extends WordpressError {
-	readonly details?: Record<string, string[]> // Field-level errors
-	// statusCode: 400
-	// code: 'validation_error'
+  readonly details?: Record<string, string[]> // Field-level errors
+  // statusCode: 400
+  // code: 'validation_error'
 }
 ```
 
@@ -490,7 +487,7 @@ Thrown when an API response passes HTTP validation but fails Zod schema validati
 
 ```typescript
 class WordpressSchemaError extends WordpressError {
-	readonly issues: Array<{ path: PropertyKey[]; message: string }>
+  readonly issues: Array<{ path: PropertyKey[]; message: string }>
 }
 ```
 
@@ -500,26 +497,26 @@ class WordpressSchemaError extends WordpressError {
 
 ```typescript
 import {
-	WordpressError,
-	WordpressNotFoundError,
-	WordpressAuthError,
-	WordpressSchemaError,
-} from "@worang/wordpress-client"
+  WordpressError,
+  WordpressNotFoundError,
+  WordpressAuthError,
+  WordpressSchemaError,
+} from '@worang/wordpress-client'
 
 try {
-	const post = await client.postById(99999)
+  const post = await client.postById(99999)
 } catch (err) {
-	if (err instanceof WordpressNotFoundError) {
-		// Post doesn't exist — show 404 page
-	} else if (err instanceof WordpressAuthError) {
-		// Not authorized — the post may be private
-	} else if (err instanceof WordpressSchemaError) {
-		// API returned an unexpected shape — log for debugging
-		console.error(err.issues)
-	} else if (err instanceof WordpressError) {
-		// Other API error (5xx, etc.)
-		console.error(`API error ${err.statusCode}: ${err.message}`)
-	}
+  if (err instanceof WordpressNotFoundError) {
+    // Post doesn't exist — show 404 page
+  } else if (err instanceof WordpressAuthError) {
+    // Not authorized — the post may be private
+  } else if (err instanceof WordpressSchemaError) {
+    // API returned an unexpected shape — log for debugging
+    console.error(err.issues)
+  } else if (err instanceof WordpressError) {
+    // Other API error (5xx, etc.)
+    console.error(`API error ${err.statusCode}: ${err.message}`)
+  }
 }
 ```
 
@@ -531,13 +528,13 @@ All list methods (`posts()`, `categories()`, `mediaList()`) return a `PaginatedR
 
 ```typescript
 interface PaginatedResponse<T> {
-	data: T[]
-	pagination: {
-		total: number // Total items across all pages
-		totalPages: number // Total number of pages
-		page: number // Current page (1-indexed)
-		perPage: number // Items per page
-	}
+  data: T[]
+  pagination: {
+    total: number // Total items across all pages
+    totalPages: number // Total number of pages
+    page: number // Current page (1-indexed)
+    perPage: number // Items per page
+  }
 }
 ```
 
@@ -550,14 +547,14 @@ let page = 1
 let totalPages = 1
 
 do {
-	const result = await client.posts({ page, per_page: 20 })
-	totalPages = result.pagination.totalPages
+  const result = await client.posts({ page, per_page: 20 })
+  totalPages = result.pagination.totalPages
 
-	for (const post of result.data) {
-		console.log(post.title)
-	}
+  for (const post of result.data) {
+    console.log(post.title)
+  }
 
-	page++
+  page++
 } while (page <= totalPages)
 ```
 
@@ -573,7 +570,7 @@ const hasNextPage = pagination.page < pagination.totalPages
 `fetchAll` iterates through all pages of a paginated method and returns every item as a flat array. Pages are requested **sequentially** (one at a time), not in parallel.
 
 ```typescript
-import { fetchAll } from "@worang/wordpress-client"
+import { fetchAll } from '@worang/wordpress-client'
 
 // Fetch every published post, one page at a time
 const allPosts = await fetchAll((page) => client.posts({ page, per_page: 100 }))
@@ -673,21 +670,21 @@ The following features appear to be recent additions based on the commit history
 
 ```typescript
 interface Post {
-	id: number
-	slug: string // URL-friendly identifier
-	title: string // HTML entities decoded (plain string, not { rendered })
-	content: string // Full HTML content
-	excerpt: string // Short excerpt as HTML
-	author: Author
-	featuredImage: {
-		id: number | undefined
-		url: string
-		alt: string
-	}
-	featuredMedia?: Media // Full media object with responsive sizes
-	date: string // ISO 8601 publication date
-	categories: Category[]
-	sticky: boolean // Whether post is pinned
+  id: number
+  slug: string // URL-friendly identifier
+  title: string // HTML entities decoded (plain string, not { rendered })
+  content: string // Full HTML content
+  excerpt: string // Short excerpt as HTML
+  author: Author
+  featuredImage: {
+    id: number | undefined
+    url: string
+    alt: string
+  }
+  featuredMedia?: Media // Full media object with responsive sizes
+  date: string // ISO 8601 publication date
+  categories: Category[]
+  sticky: boolean // Whether post is pinned
 }
 ```
 
@@ -695,11 +692,11 @@ interface Post {
 
 ```typescript
 interface Category {
-	id: number
-	slug: string // URL-friendly identifier
-	name: string // Display name
-	description?: string
-	count?: number // Number of posts in this category
+  id: number
+  slug: string // URL-friendly identifier
+  name: string // Display name
+  description?: string
+  count?: number // Number of posts in this category
 }
 ```
 
@@ -707,22 +704,22 @@ interface Category {
 
 ```typescript
 interface Media {
-	url: string // Full-size URL
-	id: number
-	alt: string // Alt text for accessibility
-	mimeType: string
-	width: number // Full-size width in pixels
-	height: number // Full-size height in pixels
-	sizes: Record<
-		string,
-		{
-			url: string
-			width: number
-			height: number
-			mimeType: string
-			filesize?: number
-		}
-	>
+  url: string // Full-size URL
+  id: number
+  alt: string // Alt text for accessibility
+  mimeType: string
+  width: number // Full-size width in pixels
+  height: number // Full-size height in pixels
+  sizes: Record<
+    string,
+    {
+      url: string
+      width: number
+      height: number
+      mimeType: string
+      filesize?: number
+    }
+  >
 }
 ```
 
@@ -730,10 +727,10 @@ interface Media {
 
 ```typescript
 interface Author {
-	id: number
-	name: string
-	url: string // Author's website URL
-	description: string // Author bio
+  id: number
+  name: string
+  url: string // Author's website URL
+  description: string // Author bio
 }
 ```
 
@@ -745,30 +742,26 @@ The package exports the following from its single entry point:
 
 ```typescript
 // Client
-import { WordpressClient } from "@worang/wordpress-client"
-import type { WordpressClientOptions } from "@worang/wordpress-client"
+import { WordpressClient } from '@worang/wordpress-client'
+import type { WordpressClientOptions } from '@worang/wordpress-client'
 
 // Domain types
-import type { Post, Media, Category, Author } from "@worang/wordpress-client"
+import type { Post, Media, Category, Author } from '@worang/wordpress-client'
 
 // Query parameters
-import type {
-	PostQueryParams,
-	TaxonomyQueryParams,
-	MediaQueryParams,
-} from "@worang/wordpress-client"
+import type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams } from '@worang/wordpress-client'
 
 // Response types
-import type { PaginatedResponse, CacheOptions } from "@worang/wordpress-client"
+import type { PaginatedResponse, CacheOptions } from '@worang/wordpress-client'
 
 // Errors
 import {
-	WordpressError,
-	WordpressNotFoundError,
-	WordpressAuthError,
-	WordpressValidationError,
-	WordpressSchemaError,
-} from "@worang/wordpress-client"
+  WordpressError,
+  WordpressNotFoundError,
+  WordpressAuthError,
+  WordpressValidationError,
+  WordpressSchemaError,
+} from '@worang/wordpress-client'
 ```
 
 ---
