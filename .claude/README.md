@@ -123,6 +123,7 @@ Now execute this block prompt:
     ├── skill-common-sections.md      ← Required sections in every skill file
     ├── model-tiers.md                ← Model selection & token conservation
     ├── project-memory-template.md    ← Template for CLAUDE.md project memory
+    ├── ssh-access.md                 ← SSH patterns for VPS access (used by ops skills)
     └── design/                       ← Design reference files (7 files)
 ```
 
@@ -148,7 +149,7 @@ All skill outputs MUST be written to `.sprints/{sprint-name}/` in the project ro
 | ------------- | ------------------------------------------------------ |
 | Scout         | `.sprints/{sprint}/process/`                           |
 | Assessor      | `.sprints/{sprint}/assessment/`                        |
-| Advisor       | `.sprints/{sprint}/assessment/`                        |
+| Advisor       | `.sprints/{sprint}/process/`                           |
 | Designer      | `.sprints/{sprint}/design/`                            |
 | Planner       | `.sprints/{sprint}/planner-checkpoint-{name}.md`       |
 | VPS Auditor   | `.sprints/{sprint}/ops/vps-audit-{host}-{date}.md`     |
