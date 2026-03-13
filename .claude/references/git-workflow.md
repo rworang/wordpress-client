@@ -2,27 +2,28 @@
 
 ## Branch Naming
 
-| Type | Pattern | Example |
-|------|---------|---------|
-| Implementation block | `block-NN/descriptive-name` | `block-03/authors-module` |
-| Sub-block | `block-NNx/descriptive-name` | `block-22a/vue-ssr-infrastructure` |
-| Bug fix | `fix/descriptive-name` | `fix/smoke-test-failures` |
-| Documentation | `docs/descriptive-name` | `docs/skills-and-reports` |
+| Type                 | Pattern                      | Example                            |
+| -------------------- | ---------------------------- | ---------------------------------- |
+| Implementation block | `block-NN/descriptive-name`  | `block-03/authors-module`          |
+| Sub-block            | `block-NNx/descriptive-name` | `block-22a/vue-ssr-infrastructure` |
+| Bug fix              | `fix/descriptive-name`       | `fix/smoke-test-failures`          |
+| Documentation        | `docs/descriptive-name`      | `docs/skills-and-reports`          |
 
 ---
 
 ## Commit Message Conventions
 
-| Prefix | When to use |
-|--------|-------------|
-| `feat:` | New functionality |
+| Prefix      | When to use                                         |
+| ----------- | --------------------------------------------------- |
+| `feat:`     | New functionality                                   |
 | `refactor:` | Restructuring existing code without behavior change |
-| `fix:` | Bug corrections |
-| `docs:` | Documentation only |
-| `test:` | Tests only |
-| `chore:` | Build, config, tooling |
+| `fix:`      | Bug corrections                                     |
+| `docs:`     | Documentation only                                  |
+| `test:`     | Tests only                                          |
+| `chore:`    | Build, config, tooling                              |
 
 Examples:
+
 ```
 feat: add AuthorsModule routes and repository
 test: add AuthorsModule integration tests
@@ -52,11 +53,11 @@ chore: update pnpm lockfile
    - See references/verification-checklist.md
 
 5. Write result summary
-   - Write to .sprints/{sprint}/results/block-NN-name.md
+   - Write to .sprints/{sprint}/sessions/{NN}-result-{name}.md
    - See references/result-summary-template.md
 
 6. Commit result summary (LAST commit on the branch)
-   git add .sprints/{sprint}/results/block-NN-name.md
+   git add .sprints/{sprint}/sessions/{NN}-result-{name}.md
    git commit -m "docs: add block NN result summary"
 
 7. Push
@@ -76,6 +77,7 @@ chore: update pnpm lockfile
 > This is the last commit on the branch.**
 
 This rule exists because:
+
 - Result summaries committed after merge go directly to `dev` (dirty history)
 - Forgotten result summaries deprive the next block of context
 - The orchestrator verifies this before merging
@@ -86,12 +88,13 @@ This rule exists because:
 
 Before merging a completed block branch, the orchestrator verifies:
 
-1. Result summary exists at `.sprints/{sprint}/results/block-NN-name.md`
+1. Result summary exists at `.sprints/{sprint}/sessions/{NN}-result-{name}.md`
 2. Result summary is committed on the branch (not a pending uncommitted file)
 3. All verification steps from the block prompt have been confirmed
 4. No merge conflicts with `dev` (rebase if needed — see below)
 
 Then merge:
+
 ```bash
 git checkout dev
 git merge --no-ff block-NN/descriptive-name -m "feat: merge block NN (descriptive name)"
@@ -99,6 +102,7 @@ git push
 ```
 
 After merge, update the coverage tracker on `dev`:
+
 ```bash
 # Edit .sprints/{sprint}/coverage-tracker.md
 git add .sprints/{sprint}/coverage-tracker.md

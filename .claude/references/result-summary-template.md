@@ -22,23 +22,23 @@ This template is used by ALL skills, not just the implementer.
 
 ## Files Created
 
-| File | Description |
-|------|-------------|
+| File              | Description    |
+| ----------------- | -------------- |
 | `path/to/file.ts` | [what it does] |
 
 ## Files Modified
 
-| File | Change summary |
-|------|---------------|
+| File              | Change summary             |
+| ----------------- | -------------------------- |
 | `path/to/file.ts` | [what was changed and why] |
 
 ## Test Results
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Total tests | NNN | NNN |
-| Passing | NNN | NNN |
-| Failing | N | N |
+| Metric      | Before | After |
+| ----------- | ------ | ----- |
+| Total tests | NNN    | NNN   |
+| Passing     | NNN    | NNN   |
+| Failing     | N      | N     |
 
 ### New Tests Added
 
@@ -50,14 +50,14 @@ This template is used by ALL skills, not just the implementer.
 
 ## Design Decisions Made
 
-| Decision | Rationale | Alternatives considered |
-|----------|-----------|------------------------|
-| [decision] | [why] | [alternatives] |
+| Decision   | Rationale | Alternatives considered |
+| ---------- | --------- | ----------------------- |
+| [decision] | [why]     | [alternatives]          |
 
 ## Issues Encountered
 
-| Issue | Resolution |
-|-------|-----------|
+| Issue   | Resolution                        |
+| ------- | --------------------------------- |
 | [issue] | [how it was resolved or deferred] |
 
 ## Specific Values Changed
@@ -65,9 +65,9 @@ This template is used by ALL skills, not just the implementer.
 _For documenter/auditor outputs: list specific claims updated, sections revised,
 or findings reported._
 
-| Item | Before | After / Finding |
-|------|--------|----------------|
-| [item] | [before] | [after] |
+| Item   | Before   | After / Finding |
+| ------ | -------- | --------------- |
+| [item] | [before] | [after]         |
 
 ## Notes for Next Block
 
@@ -82,7 +82,7 @@ or findings reported._
 > It is the last commit on the branch:
 >
 > ```bash
-> git add .sprints/{sprint}/results/block-NN-name.md
+> git add .sprints/{sprint}/sessions/{NN}-result-{name}.md
 > git commit -m "docs: add block NN result summary"
 > git push
 > ```
@@ -95,10 +95,10 @@ See `.claude/references/git-workflow.md` for the complete branch lifecycle.
 
 ## Skill-Specific Output Locations
 
-| Skill | Output path | File name convention |
-|-------|-------------|---------------------|
-| Implementer | `.sprints/{sprint}/results/` | `block-NN-{name}.md` |
-| Auditor | `.sprints/{sprint}/results/` | `audit-{name}.md` |
-| Documenter | `.sprints/{sprint}/results/` | `docs-{name}.md` |
-| Assessor | `.sprints/{sprint}/assessment/` | `NN-{name}.md` |
-| Planner | `.sprints/{sprint}/` | `planner-checkpoint-{name}.md` |
+| Skill       | Output path                     | File name convention           |
+| ----------- | ------------------------------- | ------------------------------ |
+| Implementer | `.sprints/{sprint}/sessions/`   | `{NN}-result-{name}.md`        |
+| Auditor     | `.sprints/{sprint}/sessions/`   | `audit-result-{name}.md`       |
+| Documenter  | `.sprints/{sprint}/sessions/`   | `docs-result-{name}.md`        |
+| Assessor    | `.sprints/{sprint}/assessment/` | `NN-{name}.md`                 |
+| Planner     | `.sprints/{sprint}/`            | `planner-checkpoint-{name}.md` |

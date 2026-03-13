@@ -13,7 +13,7 @@ Standard verification steps that every block must complete before requesting mer
 - [ ] `pnpm build` — no TypeScript errors
   - `[build command]` exits 0
 - [ ] Server starts without errors: `[dev command]`
-- [ ] Result summary written at `.sprints/{sprint}/results/block-NN-name.md`
+- [ ] Result summary written at `.sprints/{sprint}/sessions/{NN}-result-{name}.md`
 - [ ] Result summary committed on this branch (last commit)
 
 ---

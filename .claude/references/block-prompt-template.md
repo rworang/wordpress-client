@@ -9,6 +9,7 @@ section — empty sections signal an incomplete prompt.
 # Block NN: [Block Name]
 
 **Branch:** `block-NN/descriptive-name`
+**Model:** standard (or max / light — see `.claude/references/model-tiers.md`)
 **Track:** Backend / Frontend / Infra / Docs
 **Prerequisites:** Block NN-1, Block NN-2 (or "None")
 **Estimated effort:** S / M / L / XL
@@ -52,6 +53,9 @@ Before writing any code, read these files in order:
 - One-line annotation per file — what it shows and which section matters
 - Include the test file — so the LLM follows test patterns
 - Include what the block extends — so the LLM sees the context it's modifying
+- **Always use exact file paths, never directories** — `src/composables/useHubApi.ts`
+  not `src/composables/`. A directory reference forces the LLM to guess which file
+  matters, wasting time and increasing the chance it reads the wrong one.
 
 ---
 
@@ -85,6 +89,15 @@ Before writing any code, read these files in order:
 
 [Specific guidance, gotchas, or constraints for this block]
 
+**Always include when applicable:**
+
+- **API path prefix:** State explicitly whether endpoint paths include the versioned
+  prefix. E.g. "All routes use `/api/v1/` prefix — not `/api/`" if the codebase uses
+  versioned paths. Without this, the implementer will guess and may build the wrong
+  routes.
+- **Naming conventions:** Any names that don't follow an obvious pattern from the code.
+- **Gotchas:** Known traps, previous bugs in the area, or non-obvious behavioral quirks.
+
 ---
 
 ## Verification
@@ -109,7 +122,7 @@ the deliverable — it must be committed and pushed on the same branch as the co
 This is the last commit on the branch:
 
 1. Complete all verification steps above
-2. Write the result summary at `.sprints/{sprint}/results/block-NN-name.md`
+2. Write the result summary at `.sprints/{sprint}/sessions/{NN}-result-{name}.md`
 3. `git add` the result summary
 4. `git commit -m "docs: add block NN result summary"`
 5. `git push`
