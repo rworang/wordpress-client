@@ -36,6 +36,7 @@ import type {
   MenuQueryParams,
   UsersQueryParams,
 } from './types/params'
+import type { AuthConfig } from './types/auth'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -72,12 +73,28 @@ export interface WordpressClientOptions {
   }
   /** Response cache configuration. Set to false to disable caching entirely. */
   cache?: CacheOptions | false
+  /** Authentication configuration. Omit for read-only public access. */
+  auth?: AuthConfig
 }
 
 /** Options for individual requests. */
 export interface RequestOptions {
   /** AbortSignal for cancelling the request */
   signal?: AbortSignal
+}
+
+function encodeBasicAuth(username: string, appPassword: string): string {
+  const credentials = `${username}:${appPassword}`
+
+  if (typeof globalThis.btoa === 'function') {
+    return `Basic ${globalThis.btoa(credentials)}`
+  }
+
+  if (typeof Buffer !== 'undefined') {
+    return `Basic ${Buffer.from(credentials).toString('base64')}`
+  }
+
+  throw new Error('WordpressClient: no base64 encoder available in this environment')
 }
 
 function appendQueryParams(searchParams: URLSearchParams, params: Record<string, unknown>): void {
@@ -123,6 +140,7 @@ export class WordpressClient {
   private readonly timeout: number
   private readonly retries: number
   private readonly cache: TTLCache<unknown> | null
+  private readonly resolveAuthHeader: (() => Promise<string | null>) | null
   private readonly inflight = new Map<string, Promise<unknown>>()
 
   /**
@@ -130,7 +148,7 @@ export class WordpressClient {
    *
    * @throws {Error} If baseURL is not provided
    */
-  constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache }: WordpressClientOptions) {
+  constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache, auth }: WordpressClientOptions) {
     if (!baseURL) {
       throw new Error('WordpressClient: baseURL is required')
     }
@@ -142,6 +160,15 @@ export class WordpressClient {
     this.timeout = timeout
     this.retries = retry?.retries ?? 3
     this.cache = cache === false ? null : new TTLCache(cache)
+
+    if (!auth) {
+      this.resolveAuthHeader = null
+    } else if ('getAuthHeader' in auth) {
+      this.resolveAuthHeader = async () => auth.getAuthHeader()
+    } else {
+      const authorizationHeader = encodeBasicAuth(auth.username, auth.appPassword)
+      this.resolveAuthHeader = async () => authorizationHeader
+    }
   }
 
   // ---- Posts ----
