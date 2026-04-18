@@ -286,17 +286,19 @@ describe('WordpressClient', () => {
   describe('auth', () => {
     it('constructs with no auth, credentials auth, and resolver auth', () => {
       expect(() => createClient()).not.toThrow()
-      expect(() =>
-        new WordpressClient({
-          baseURL: BASE_URL,
-          auth: { username: 'alice', appPassword: 'secret' },
-        }),
+      expect(
+        () =>
+          new WordpressClient({
+            baseURL: BASE_URL,
+            auth: { username: 'alice', appPassword: 'secret' },
+          }),
       ).not.toThrow()
-      expect(() =>
-        new WordpressClient({
-          baseURL: BASE_URL,
-          auth: { getAuthHeader: () => 'Basic test-token' },
-        }),
+      expect(
+        () =>
+          new WordpressClient({
+            baseURL: BASE_URL,
+            auth: { getAuthHeader: () => 'Basic test-token' },
+          }),
       ).not.toThrow()
     })
 

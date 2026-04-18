@@ -90,9 +90,11 @@ function encodeBasicAuth(username: string, appPassword: string): string {
     return `Basic ${globalThis.btoa(credentials)}`
   }
 
-  const nodeBuffer = (globalThis as typeof globalThis & {
-    Buffer?: { from(input: string): { toString(encoding: string): string } }
-  }).Buffer
+  const nodeBuffer = (
+    globalThis as typeof globalThis & {
+      Buffer?: { from(input: string): { toString(encoding: string): string } }
+    }
+  ).Buffer
 
   if (nodeBuffer) {
     return `Basic ${nodeBuffer.from(credentials).toString('base64')}`
