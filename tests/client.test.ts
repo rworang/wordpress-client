@@ -378,9 +378,12 @@ describe('WordpressClient', () => {
 
     it('throws WordpressAuthError when auth is required but unavailable', async () => {
       const client = createClient()
+      const internalClient = client as unknown as {
+        request: (method: string, path: string, options?: { requireAuth?: boolean }) => Promise<unknown>
+      }
 
-      await expect((client as any).request('GET', '/posts', { requireAuth: true })).rejects.toThrow(WordpressAuthError)
-      await expect((client as any).request('GET', '/posts', { requireAuth: true })).rejects.toThrow(
+      await expect(internalClient.request('GET', '/posts', { requireAuth: true })).rejects.toThrow(WordpressAuthError)
+      await expect(internalClient.request('GET', '/posts', { requireAuth: true })).rejects.toThrow(
         'Authentication required but no credentials available',
       )
     })
