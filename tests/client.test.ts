@@ -381,13 +381,170 @@ describe('WordpressClient', () => {
     it('throws WordpressAuthError when auth is required but unavailable', async () => {
       const client = createClient()
       const internalClient = client as unknown as {
-        request: (method: string, path: string, options?: { requireAuth?: boolean }) => Promise<unknown>
+        request: (config: { method: 'GET'; path: string; requireAuth?: boolean }) => Promise<unknown>
       }
 
-      await expect(internalClient.request('GET', '/posts', { requireAuth: true })).rejects.toThrow(WordpressAuthError)
-      await expect(internalClient.request('GET', '/posts', { requireAuth: true })).rejects.toThrow(
-        'Authentication required but no credentials available',
+      await expect(internalClient.request({ method: 'GET', path: '/posts', requireAuth: true })).rejects.toThrow(
+        WordpressAuthError,
       )
+      await expect(internalClient.request({ method: 'GET', path: '/posts', requireAuth: true })).rejects.toThrow(
+        'Authentication required for write operation',
+      )
+    })
+  })
+
+  describe('request pipeline', () => {
+    it('performs a public GET request and returns the raw HttpResponse shape', async () => {
+      const client = createClient()
+      const response = await client.request<{ id: number; slug: string }[]>({
+        method: 'GET',
+        path: '/posts',
+        params: { _embed: true },
+      })
+
+      expect(response.status).toBe(200)
+      expect(response.data).toHaveLength(1)
+      expect(response.data[0].slug).toBe('hello-world')
+      expect(response.headers.get('x-wp-total')).toBe('1')
+    })
+
+    it('sends JSON body and content type for POST requests', async () => {
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts`, async ({ request }) => {
+          expect(request.headers.get('content-type')).toContain('application/json')
+          await expect(request.json()).resolves.toEqual({ title: 'New post' })
+          return HttpResponse.json({ ok: true }, { status: 201 })
+        }),
+      )
+
+      const client = createClient()
+      const response = await client.request<{ ok: boolean }>({
+        method: 'POST',
+        path: '/posts',
+        body: { title: 'New post' },
+      })
+
+      expect(response.status).toBe(201)
+      expect(response.data.ok).toBe(true)
+    })
+
+    it('invalidates cached posts after a successful POST request', async () => {
+      let getCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          const url = new URL(request.url)
+          if (url.searchParams.get('page') === '1') {
+            getCount++
+          }
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts`, () => HttpResponse.json({ ok: true }, { status: 201 })),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.posts({ page: 1 })
+      await client.request({ method: 'POST', path: '/posts', body: { title: 'Invalidate' } })
+      await client.posts({ page: 1 })
+
+      expect(getCount).toBe(2)
+    })
+
+    it('invalidates both category and post caches after a category write', async () => {
+      let postCount = 0
+      let categoryCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          postCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+        http.get(`${BASE_URL}/wp-json/wp/v2/categories`, () => {
+          categoryCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+        http.post(`${BASE_URL}/wp-json/wp/v2/categories`, () => HttpResponse.json({ ok: true }, { status: 201 })),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.posts()
+      await client.categories()
+      await client.request({ method: 'POST', path: '/categories', body: { name: 'New category' } })
+      await client.posts()
+      await client.categories()
+
+      expect(postCount).toBe(2)
+      expect(categoryCount).toBe(2)
+    })
+
+    it('invalidates keys by string prefix through client.invalidate()', async () => {
+      let postCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          postCount++
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.posts()
+      expect(client.invalidate('/posts')).toBe(1)
+      await client.posts()
+
+      expect(postCount).toBe(2)
+    })
+
+    it('invalidates custom namespace keys by regular expression', async () => {
+      let callCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang/v1/cache-version`, () => {
+          callCount++
+          return HttpResponse.json({ version: 'v42' })
+        }),
+      )
+
+      const client = createClient({ cache: { ttl: 5000 } })
+      await client.cacheVersion()
+      expect(client.invalidate(/^site:\/worang\/v1\//)).toBe(1)
+      await client.cacheVersion()
+
+      expect(callCount).toBe(2)
+    })
+
+    it('throws WordpressAuthError for write requests that require auth', async () => {
+      const client = createClient()
+
+      await expect(
+        client.request({ method: 'POST', path: '/posts', body: { title: 'Private' }, requireAuth: true }),
+      ).rejects.toThrow(WordpressAuthError)
+      await expect(
+        client.request({ method: 'POST', path: '/posts', body: { title: 'Private' }, requireAuth: true }),
+      ).rejects.toThrow('Authentication required for write operation')
+    })
+
+    it('does not retry non-idempotent failed POST requests', async () => {
+      let callCount = 0
+
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          callCount++
+          return HttpResponse.json({ message: 'Server error' }, { status: 500 })
+        }),
+      )
+
+      const client = createClient({ cache: false })
+      await expect(client.request({ method: 'POST', path: '/posts', body: { title: 'Retry once' } })).rejects.toThrow()
+      expect(callCount).toBe(1)
     })
   })
 

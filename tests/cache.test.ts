@@ -69,4 +69,42 @@ describe('TTLCache', () => {
     expect(cache.get('a')).toBe('updated')
     expect(cache.get('b')).toBe('2')
   })
+
+  it('invalidates string-matched prefixes and returns the removed count', () => {
+    const cache = new TTLCache<string>()
+    cache.set('api:/posts:{"page":1}', 'posts')
+    cache.set('api:/categories:{}', 'categories')
+    cache.set('site:/worang/v1/cache-version:{}', 'custom')
+
+    const removed = cache.invalidate('/posts')
+
+    expect(removed).toBe(1)
+    expect(cache.get('api:/posts:{"page":1}')).toBeUndefined()
+    expect(cache.get('api:/categories:{}')).toBe('categories')
+    expect(cache.get('site:/worang/v1/cache-version:{}')).toBe('custom')
+  })
+
+  it('invalidates keys by regular expression', () => {
+    const cache = new TTLCache<string>()
+    cache.set('api:/posts:{}', 'posts')
+    cache.set('site:/worang/v1/cache-version:{}', 'custom')
+
+    const removed = cache.invalidate(/^site:\/worang\/v1\//)
+
+    expect(removed).toBe(1)
+    expect(cache.get('site:/worang/v1/cache-version:{}')).toBeUndefined()
+    expect(cache.get('api:/posts:{}')).toBe('posts')
+  })
+
+  it('invalidates keys via predicate function', () => {
+    const cache = new TTLCache<string>()
+    cache.set('api:/posts:{}', 'posts')
+    cache.set('api:/categories:{}', 'categories')
+
+    const removed = cache.invalidate((key) => key.includes('/categories'))
+
+    expect(removed).toBe(1)
+    expect(cache.get('api:/categories:{}')).toBeUndefined()
+    expect(cache.get('api:/posts:{}')).toBe('posts')
+  })
 })
