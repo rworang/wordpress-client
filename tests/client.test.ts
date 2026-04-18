@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from './server'
 import { WordpressClient } from '../src/client'
@@ -280,6 +280,109 @@ describe('WordpressClient', () => {
 
       const client = createClient()
       await client.fetchCustom('/products', { per_page: 5 })
+    })
+  })
+
+  describe('auth', () => {
+    it('constructs with no auth, credentials auth, and resolver auth', () => {
+      expect(() => createClient()).not.toThrow()
+      expect(() =>
+        new WordpressClient({
+          baseURL: BASE_URL,
+          auth: { username: 'alice', appPassword: 'secret' },
+        }),
+      ).not.toThrow()
+      expect(() =>
+        new WordpressClient({
+          baseURL: BASE_URL,
+          auth: { getAuthHeader: () => 'Basic test-token' },
+        }),
+      ).not.toThrow()
+    })
+
+    it('does not send an Authorization header when auth is not configured', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          expect(request.headers.get('Authorization')).toBeNull()
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      await client.posts()
+    })
+
+    it('sends a Basic Authorization header when credentials auth is configured', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          expect(request.headers.get('Authorization')).toBe(`Basic ${Buffer.from('alice:secret').toString('base64')}`)
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.posts()
+    })
+
+    it('calls the auth resolver once per request', async () => {
+      const getAuthHeader = vi.fn(() => 'Basic resolver-token')
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          expect(request.headers.get('Authorization')).toBe('Basic resolver-token')
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { getAuthHeader },
+      })
+
+      await client.posts()
+      await client.posts({ page: 2 })
+
+      expect(getAuthHeader).toHaveBeenCalledTimes(2)
+    })
+
+    it('awaits a Promise returned by the auth resolver', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
+          expect(request.headers.get('Authorization')).toBe('Basic async-token')
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { getAuthHeader: async () => 'Basic async-token' },
+      })
+
+      await client.posts()
+    })
+
+    it('throws WordpressAuthError when auth is required but unavailable', async () => {
+      const client = createClient()
+
+      await expect((client as any).request('GET', '/posts', { requireAuth: true })).rejects.toThrow(WordpressAuthError)
+      await expect((client as any).request('GET', '/posts', { requireAuth: true })).rejects.toThrow(
+        'Authentication required but no credentials available',
+      )
     })
   })
 
