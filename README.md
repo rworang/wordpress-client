@@ -268,6 +268,52 @@ const post = await client.postById(42)
 
 ---
 
+### `pages(params?)`
+
+Fetch a paginated list of pages.
+
+```typescript
+async pages(params?: PageQueryParams, options?: RequestOptions): Promise<PaginatedResponse<Page>>
+```
+
+**Defaults:** `page = 1`, `per_page = 10`
+
+```typescript
+const { data: pages } = await client.pages({ parent: 0 })
+```
+
+---
+
+### `page(slug)`
+
+Fetch a single page by its URL slug. Returns `null` if no page matches.
+
+```typescript
+async page(slug: string, options?: RequestOptions): Promise<Page | null>
+```
+
+```typescript
+const about = await client.page('about')
+```
+
+---
+
+### `pageById(id)`
+
+Fetch a single page by its numeric ID.
+
+```typescript
+async pageById(id: number, options?: RequestOptions): Promise<Page>
+```
+
+```typescript
+const page = await client.pageById(2)
+```
+
+**Error cases:** Throws `WordpressNotFoundError` if the page does not exist.
+
+---
+
 ### `categories(params?)`
 
 Fetch a paginated list of categories.
@@ -297,6 +343,98 @@ async category(slug: string): Promise<Category | null>
 
 ```typescript
 const cat = await client.category('tech-news')
+```
+
+---
+
+### `tags(params?)`
+
+Fetch a paginated list of tags.
+
+```typescript
+async tags(params?: TaxonomyQueryParams, options?: RequestOptions): Promise<PaginatedResponse<Tag>>
+```
+
+**Defaults:** `page = 1`, `per_page = 100`
+
+```typescript
+const { data: tags } = await client.tags({ hide_empty: true })
+```
+
+---
+
+### `tag(slug)`
+
+Fetch a single tag by its URL slug. Returns `null` if no tag matches.
+
+```typescript
+async tag(slug: string, options?: RequestOptions): Promise<Tag | null>
+```
+
+```typescript
+const tag = await client.tag('javascript')
+```
+
+---
+
+### `users(params?)`
+
+Fetch a paginated list of users.
+
+```typescript
+async users(params?: UsersQueryParams, options?: RequestOptions): Promise<PaginatedResponse<Author>>
+```
+
+**Defaults:** `page = 1`, `per_page = 10`
+
+```typescript
+const { data: users } = await client.users({ per_page: 5 })
+```
+
+---
+
+### `user(slug)`
+
+Fetch a single user by their username slug. Returns `null` if no user matches.
+
+```typescript
+async user(slug: string, options?: RequestOptions): Promise<Author | null>
+```
+
+```typescript
+const author = await client.user('jane-doe')
+```
+
+---
+
+### `menus(params?)`
+
+Fetch a paginated list of navigation menus.
+
+```typescript
+async menus(params?: MenuQueryParams, options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>>
+```
+
+**Defaults:** `page = 1`, `per_page = 100`
+
+```typescript
+const { data: menus } = await client.menus()
+```
+
+---
+
+### `menuItems(params?)`
+
+Fetch a paginated list of menu items, optionally filtered by menu.
+
+```typescript
+async menuItems(params?: MenuItemQueryParams, options?: RequestOptions): Promise<PaginatedResponse<MenuItem>>
+```
+
+**Defaults:** `page = 1`, `per_page = 100`
+
+```typescript
+const { data: items } = await client.menuItems({ menus: 3 })
 ```
 
 ---
@@ -410,6 +548,51 @@ client.clearCache()
 | `mime_type`  | `string`                                         | —       | Filter by MIME type (e.g., `'image/jpeg'`) |
 | `orderby`    | `'date' \| 'title' \| 'id'`                      | —       | Sort field                                 |
 | `order`      | `'asc' \| 'desc'`                                | —       | Sort direction                             |
+
+### `PageQueryParams`
+
+| Parameter  | Type                                                      | Default  | Description                  |
+| ---------- | --------------------------------------------------------- | -------- | ---------------------------- |
+| `page`     | `number`                                                  | `1`      | Page number (1-indexed)      |
+| `per_page` | `number`                                                  | `10`     | Results per page             |
+| `search`   | `string`                                                  | —        | Search term                  |
+| `slug`     | `string \| string[]`                                      | —        | Filter by exact slug(s)      |
+| `status`   | `'publish' \| 'draft' \| 'pending' \| 'private' \| 'any'` | —        | Page status filter           |
+| `parent`   | `number`                                                  | —        | Filter by parent page ID     |
+| `orderby`  | `'date' \| 'title' \| 'slug' \| 'menu_order'`             | `'date'` | Sort field                   |
+| `order`    | `'asc' \| 'desc'`                                         | `'desc'` | Sort direction               |
+| `exclude`  | `number[]`                                                | —        | Exclude pages with these IDs |
+
+### `MenuItemQueryParams`
+
+| Parameter  | Type                   | Default | Description                       |
+| ---------- | ---------------------- | ------- | --------------------------------- |
+| `page`     | `number`               | `1`     | Page number (1-indexed)           |
+| `per_page` | `number`               | `100`   | Results per page                  |
+| `menus`    | `number`               | —       | Restrict items to a specific menu |
+| `orderby`  | `'id' \| 'menu_order'` | —       | Sort field                        |
+| `order`    | `'asc' \| 'desc'`      | —       | Sort direction                    |
+
+### `MenuQueryParams`
+
+| Parameter  | Type                       | Default | Description             |
+| ---------- | -------------------------- | ------- | ----------------------- |
+| `page`     | `number`                   | `1`     | Page number (1-indexed) |
+| `per_page` | `number`                   | `100`   | Results per page        |
+| `search`   | `string`                   | —       | Search term             |
+| `orderby`  | `'id' \| 'name' \| 'slug'` | —       | Sort field              |
+| `order`    | `'asc' \| 'desc'`          | —       | Sort direction          |
+
+### `UsersQueryParams`
+
+| Parameter  | Type                                                         | Default | Description             |
+| ---------- | ------------------------------------------------------------ | ------- | ----------------------- |
+| `page`     | `number`                                                     | `1`     | Page number (1-indexed) |
+| `per_page` | `number`                                                     | `10`    | Results per page        |
+| `search`   | `string`                                                     | —       | Search term             |
+| `slug`     | `string \| string[]`                                         | —       | Filter by exact slug(s) |
+| `orderby`  | `'id' \| 'include' \| 'name' \| 'registered_date' \| 'slug'` | —       | Sort field              |
+| `order`    | `'asc' \| 'desc'`                                            | —       | Sort direction          |
 
 ---
 
@@ -621,14 +804,11 @@ add_action('rest_api_init', function() {
 
 ### Unsupported endpoints
 
-The following WordPress REST API endpoints are **not** supported:
+The following WordPress REST API surfaces are still **not** supported directly:
 
-- **Users** — author data is available only as embedded data within posts
-- **Tags** — no dedicated `tags()` or `tag()` methods (use `tags` / `tags_exclude` in `PostQueryParams` to filter by tag ID)
-- **Pages** — no support for WordPress pages
-- **Comments** — no comment retrieval or posting
-- **Custom post types** — only the default `posts` endpoint is supported
+- **Comments** — no comment retrieval or posting helpers
 - **WooCommerce** — no support for products, orders, or other WooCommerce endpoints
+- **Custom write endpoints** — use `fetchCustom()` for read-only access to custom namespaces or post types
 
 ### No authentication
 
@@ -684,6 +864,7 @@ interface Post {
   featuredMedia?: Media // Full media object with responsive sizes
   date: string // ISO 8601 publication date
   categories: Category[]
+  tags: Tag[]
   sticky: boolean // Whether post is pinned
 }
 ```
@@ -742,14 +923,22 @@ The package exports the following from its single entry point:
 
 ```typescript
 // Client
-import { WordpressClient } from '@worang/wordpress-client'
-import type { WordpressClientOptions } from '@worang/wordpress-client'
+import { WordpressClient, fetchAll } from '@worang/wordpress-client'
+import type { WordpressClientOptions, RequestOptions } from '@worang/wordpress-client'
 
 // Domain types
-import type { Post, Media, Category, Author } from '@worang/wordpress-client'
+import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from '@worang/wordpress-client'
 
 // Query parameters
-import type { PostQueryParams, TaxonomyQueryParams, MediaQueryParams } from '@worang/wordpress-client'
+import type {
+  PostQueryParams,
+  PageQueryParams,
+  TaxonomyQueryParams,
+  MediaQueryParams,
+  MenuItemQueryParams,
+  MenuQueryParams,
+  UsersQueryParams,
+} from '@worang/wordpress-client'
 
 // Response types
 import type { PaginatedResponse, CacheOptions } from '@worang/wordpress-client'
