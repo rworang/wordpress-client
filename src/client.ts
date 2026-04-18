@@ -155,7 +155,8 @@ function invalidationTargets(path: string): string[] {
     return ['/']
   }
 
-  const basePath = segments[0] === 'worang' && segments.length >= 3 ? `/${segments.slice(0, 3).join('/')}` : `/${segments[0]}`
+  const basePath =
+    segments[0] === 'worang' && segments.length >= 3 ? `/${segments.slice(0, 3).join('/')}` : `/${segments[0]}`
 
   if (basePath === '/categories') {
     return ['/categories', '/posts']
