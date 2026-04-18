@@ -52,7 +52,7 @@ export function toMediaFromFeatured(raw?: RawFeaturedMedia): Media | undefined {
   return {
     id: raw.id,
     url: raw.source_url,
-    alt: raw.alt_text ?? '',
+    alt: raw.alt_text,
     mimeType: raw.mime_type ?? '',
     width: raw.media_details.width,
     height: raw.media_details.height,

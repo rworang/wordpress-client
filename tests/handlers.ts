@@ -111,11 +111,6 @@ export const handlers = [
     })
   }),
 
-  // Single user by ID
-  http.get(`${BASE}/wp/v2/users/:id`, () => {
-    return HttpResponse.json(rawAuthor)
-  }),
-
   // Media by ID
   http.get(`${BASE}/wp/v2/media/:id`, ({ params }) => {
     if (params.id === '999') {
