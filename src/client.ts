@@ -83,6 +83,20 @@ export interface RequestOptions {
   signal?: AbortSignal
 }
 
+export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
+
+export interface RequestConfig {
+  method: RequestMethod
+  path: string
+  body?: unknown
+  params?: Record<string, unknown>
+  signal?: AbortSignal
+  base?: 'api' | 'site'
+  idempotent?: boolean
+  requireAuth?: boolean
+  headers?: HeadersInit
+}
+
 function encodeBasicAuth(username: string, appPassword: string): string {
   const credentials = `${username}:${appPassword}`
 
@@ -127,6 +141,35 @@ function isBodyInit(value: unknown): value is BodyInit {
     value instanceof ArrayBuffer ||
     ArrayBuffer.isView(value)
   )
+}
+
+function isIdempotentMethod(method: RequestMethod): boolean {
+  return method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
+}
+
+function invalidationTargets(path: string): string[] {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const segments = normalizedPath.split('/').filter(Boolean)
+
+  if (segments.length === 0) {
+    return ['/']
+  }
+
+  const basePath = segments[0] === 'worang' && segments.length >= 3 ? `/${segments.slice(0, 3).join('/')}` : `/${segments[0]}`
+
+  if (basePath === '/categories') {
+    return ['/categories', '/posts']
+  }
+
+  if (basePath === '/tags') {
+    return ['/tags', '/posts']
+  }
+
+  if (basePath === '/media') {
+    return ['/media']
+  }
+
+  return [basePath]
 }
 
 /**
@@ -557,6 +600,11 @@ export class WordpressClient {
     this.cache?.clear()
   }
 
+  /** Invalidate cached entries by prefix, pattern, or predicate. */
+  invalidate(pattern: string | RegExp | ((key: string) => boolean)): number {
+    return this.cache?.invalidate(pattern) ?? 0
+  }
+
   private dedupGet<T>(
     url: string,
     params?: Record<string, unknown>,
@@ -573,7 +621,9 @@ export class WordpressClient {
     }
 
     return dedup(this.inflight, key, async () => {
-      const response = await this.request<T>('GET', url, {
+      const response = await this.request<T>({
+        method: 'GET',
+        path: url,
         params,
         signal,
         base: options.base,
@@ -584,46 +634,37 @@ export class WordpressClient {
     })
   }
 
-  private async request<T>(
-    method: string,
-    path: string,
-    options: {
-      params?: Record<string, unknown>
-      signal?: AbortSignal
-      base?: 'api' | 'site'
-      headers?: HeadersInit
-      body?: unknown
-      idempotent?: boolean
-      requireAuth?: boolean
-    } = {},
-  ): Promise<HttpResponse<T>> {
-    const baseURL = options.base === 'site' ? this.siteApiBaseURL : this.apiBaseURL
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  async request<T>(config: RequestConfig): Promise<HttpResponse<T>> {
+    const method = config.method.toUpperCase() as RequestMethod
+    const baseURL = config.base === 'site' ? this.siteApiBaseURL : this.apiBaseURL
+    const normalizedPath = config.path.startsWith('/') ? config.path : `/${config.path}`
     const url = new URL(`${baseURL}${normalizedPath}`)
 
-    if (options.params) {
-      appendQueryParams(url.searchParams, options.params)
+    if (config.params) {
+      appendQueryParams(url.searchParams, config.params)
     }
 
-    const headers = new Headers(options.headers)
+    const headers = new Headers(config.headers)
     headers.set('Accept', 'application/json')
 
     const authorizationHeader = this.resolveAuthHeader ? await this.resolveAuthHeader() : null
     if (authorizationHeader) {
       headers.set('Authorization', authorizationHeader)
-    } else if (options.requireAuth) {
-      throw new WordpressAuthError('Authentication required but no credentials available')
+    } else if (config.requireAuth) {
+      throw new WordpressAuthError('Authentication required for write operation')
     }
 
     let body: BodyInit | undefined
-    if (options.body !== undefined) {
-      if (isBodyInit(options.body)) {
-        body = options.body
+    if (config.body !== undefined) {
+      if (isBodyInit(config.body)) {
+        body = config.body
       } else {
         headers.set('Content-Type', 'application/json')
-        body = JSON.stringify(options.body)
+        body = JSON.stringify(config.body)
       }
     }
+
+    const idempotent = config.idempotent ?? isIdempotentMethod(method)
 
     try {
       const response = await fetchWithRetry<T>(
@@ -635,14 +676,20 @@ export class WordpressClient {
         },
         {
           retries: this.retries,
-          idempotent: options.idempotent,
-          signal: options.signal,
+          idempotent,
+          signal: config.signal,
           timeoutMs: this.timeout,
         },
       )
 
       if (response.status >= 400) {
         this.handleError(response, url.toString())
+      }
+
+      if (!idempotent) {
+        for (const target of invalidationTargets(normalizedPath)) {
+          this.invalidate(target)
+        }
       }
 
       return response

@@ -61,6 +61,31 @@ export class TTLCache<T> {
     return this.entries.delete(key)
   }
 
+  invalidate(predicate: string | RegExp | ((key: string) => boolean)): number {
+    const shouldDelete = (key: string): boolean => {
+      if (typeof predicate === 'string') {
+        const normalizedKey = key.replace(/^[^:]+:/, '')
+        return normalizedKey.startsWith(predicate)
+      }
+
+      if (predicate instanceof RegExp) {
+        return predicate.test(key)
+      }
+
+      return predicate(key)
+    }
+
+    let removed = 0
+    for (const key of this.entries.keys()) {
+      if (shouldDelete(key)) {
+        this.entries.delete(key)
+        removed++
+      }
+    }
+
+    return removed
+  }
+
   clear(): void {
     this.entries.clear()
   }
