@@ -90,8 +90,12 @@ function encodeBasicAuth(username: string, appPassword: string): string {
     return `Basic ${globalThis.btoa(credentials)}`
   }
 
-  if (typeof Buffer !== 'undefined') {
-    return `Basic ${Buffer.from(credentials).toString('base64')}`
+  const nodeBuffer = (globalThis as typeof globalThis & {
+    Buffer?: { from(input: string): { toString(encoding: string): string } }
+  }).Buffer
+
+  if (nodeBuffer) {
+    return `Basic ${nodeBuffer.from(credentials).toString('base64')}`
   }
 
   throw new Error('WordpressClient: no base64 encoder available in this environment')

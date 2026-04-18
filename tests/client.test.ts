@@ -317,7 +317,7 @@ describe('WordpressClient', () => {
     it('sends a Basic Authorization header when credentials auth is configured', async () => {
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/posts`, ({ request }) => {
-          expect(request.headers.get('Authorization')).toBe(`Basic ${Buffer.from('alice:secret').toString('base64')}`)
+          expect(request.headers.get('Authorization')).toBe('Basic YWxpY2U6c2VjcmV0')
           return HttpResponse.json([], {
             headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
           })
