@@ -41,6 +41,41 @@ export const handlers = [
     return HttpResponse.json(rawPost)
   }),
 
+  // Create post
+  http.post(`${BASE}/wp/v2/posts`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawPost,
+      id: 101,
+      slug: typeof body.slug === 'string' ? body.slug : rawPost.slug,
+      title: { rendered: typeof body.title === 'string' ? body.title : rawPost.title.rendered },
+      content: { rendered: typeof body.content === 'string' ? body.content : rawPost.content.rendered },
+      excerpt: { rendered: typeof body.excerpt === 'string' ? body.excerpt : rawPost.excerpt.rendered },
+      sticky: typeof body.sticky === 'boolean' ? body.sticky : rawPost.sticky,
+    })
+  }),
+
+  // Update post
+  http.post(`${BASE}/wp/v2/posts/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawPost,
+      id: Number(params.id),
+      slug: typeof body.slug === 'string' ? body.slug : rawPost.slug,
+      title: { rendered: typeof body.title === 'string' ? body.title : rawPost.title.rendered },
+      content: { rendered: typeof body.content === 'string' ? body.content : rawPost.content.rendered },
+      excerpt: { rendered: typeof body.excerpt === 'string' ? body.excerpt : rawPost.excerpt.rendered },
+      sticky: typeof body.sticky === 'boolean' ? body.sticky : rawPost.sticky,
+    })
+  }),
+
+  // Delete post
+  http.delete(`${BASE}/wp/v2/posts/:id`, () => {
+    return HttpResponse.json({ deleted: true, previous: rawPost })
+  }),
+
   // Pages list
   http.get(`${BASE}/wp/v2/pages`, ({ request }) => {
     const url = new URL(request.url)
