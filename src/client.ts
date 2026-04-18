@@ -588,6 +588,7 @@ export class WordpressClient {
       headers?: HeadersInit
       body?: unknown
       idempotent?: boolean
+      requireAuth?: boolean
     } = {},
   ): Promise<HttpResponse<T>> {
     const baseURL = options.base === 'site' ? this.siteApiBaseURL : this.apiBaseURL
@@ -600,6 +601,13 @@ export class WordpressClient {
 
     const headers = new Headers(options.headers)
     headers.set('Accept', 'application/json')
+
+    const authorizationHeader = this.resolveAuthHeader ? await this.resolveAuthHeader() : null
+    if (authorizationHeader) {
+      headers.set('Authorization', authorizationHeader)
+    } else if (options.requireAuth) {
+      throw new WordpressAuthError('Authentication required but no credentials available')
+    }
 
     let body: BodyInit | undefined
     if (options.body !== undefined) {
