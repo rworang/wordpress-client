@@ -36,6 +36,7 @@ import type {
   MenuQueryParams,
   UsersQueryParams,
 } from './types/params'
+import type { AuthConfig } from './types/auth'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -72,12 +73,34 @@ export interface WordpressClientOptions {
   }
   /** Response cache configuration. Set to false to disable caching entirely. */
   cache?: CacheOptions | false
+  /** Authentication configuration. Omit for read-only public access. */
+  auth?: AuthConfig
 }
 
 /** Options for individual requests. */
 export interface RequestOptions {
   /** AbortSignal for cancelling the request */
   signal?: AbortSignal
+}
+
+function encodeBasicAuth(username: string, appPassword: string): string {
+  const credentials = `${username}:${appPassword}`
+
+  if (typeof globalThis.btoa === 'function') {
+    return `Basic ${globalThis.btoa(credentials)}`
+  }
+
+  const nodeBuffer = (
+    globalThis as typeof globalThis & {
+      Buffer?: { from(input: string): { toString(encoding: string): string } }
+    }
+  ).Buffer
+
+  if (nodeBuffer) {
+    return `Basic ${nodeBuffer.from(credentials).toString('base64')}`
+  }
+
+  throw new Error('WordpressClient: no base64 encoder available in this environment')
 }
 
 function appendQueryParams(searchParams: URLSearchParams, params: Record<string, unknown>): void {
@@ -123,6 +146,7 @@ export class WordpressClient {
   private readonly timeout: number
   private readonly retries: number
   private readonly cache: TTLCache<unknown> | null
+  private readonly resolveAuthHeader: (() => Promise<string | null>) | null
   private readonly inflight = new Map<string, Promise<unknown>>()
 
   /**
@@ -130,7 +154,7 @@ export class WordpressClient {
    *
    * @throws {Error} If baseURL is not provided
    */
-  constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache }: WordpressClientOptions) {
+  constructor({ baseURL, namespace = 'wp/v2', timeout = 10_000, retry, cache, auth }: WordpressClientOptions) {
     if (!baseURL) {
       throw new Error('WordpressClient: baseURL is required')
     }
@@ -142,6 +166,15 @@ export class WordpressClient {
     this.timeout = timeout
     this.retries = retry?.retries ?? 3
     this.cache = cache === false ? null : new TTLCache(cache)
+
+    if (!auth) {
+      this.resolveAuthHeader = null
+    } else if ('getAuthHeader' in auth) {
+      this.resolveAuthHeader = async () => auth.getAuthHeader()
+    } else {
+      const authorizationHeader = encodeBasicAuth(auth.username, auth.appPassword)
+      this.resolveAuthHeader = async () => authorizationHeader
+    }
   }
 
   // ---- Posts ----
@@ -561,6 +594,7 @@ export class WordpressClient {
       headers?: HeadersInit
       body?: unknown
       idempotent?: boolean
+      requireAuth?: boolean
     } = {},
   ): Promise<HttpResponse<T>> {
     const baseURL = options.base === 'site' ? this.siteApiBaseURL : this.apiBaseURL
@@ -573,6 +607,13 @@ export class WordpressClient {
 
     const headers = new Headers(options.headers)
     headers.set('Accept', 'application/json')
+
+    const authorizationHeader = this.resolveAuthHeader ? await this.resolveAuthHeader() : null
+    if (authorizationHeader) {
+      headers.set('Authorization', authorizationHeader)
+    } else if (options.requireAuth) {
+      throw new WordpressAuthError('Authentication required but no credentials available')
+    }
 
     let body: BodyInit | undefined
     if (options.body !== undefined) {

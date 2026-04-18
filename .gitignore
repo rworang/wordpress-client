@@ -28,5 +28,5 @@ coverage
 # old
 docs
 .claude/
-.sprints/
+# .sprints/
 .mcp.json

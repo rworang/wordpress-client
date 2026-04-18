@@ -13,6 +13,7 @@
 // Client
 export { WordpressClient } from './client'
 export type { WordpressClientOptions, RequestOptions } from './client'
+export type { AuthConfig, AuthCredentials, AuthResolver } from './types/auth'
 
 // Types
 export type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain'
