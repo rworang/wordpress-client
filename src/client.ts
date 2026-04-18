@@ -16,8 +16,6 @@
  * const { data: techPosts } = await client.posts({ categories: [3] })
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios'
-import axiosRetry, { exponentialDelay, isNetworkOrIdempotentRequestError } from 'axios-retry'
 import type {
   RawPost,
   RawPage,
@@ -49,6 +47,7 @@ import { extractPagination, type PaginatedResponse } from './utils/pagination'
 import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors'
 import { dedup } from './utils/dedup'
 import { TTLCache, type CacheOptions } from './utils/cache'
+import { fetchWithRetry, type HttpResponse } from './utils/http'
 
 /**
  * Configuration options for the WordPress client.
@@ -81,6 +80,32 @@ export interface RequestOptions {
   signal?: AbortSignal
 }
 
+function appendQueryParams(searchParams: URLSearchParams, params: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        searchParams.append(key, String(item))
+      }
+      continue
+    }
+
+    searchParams.set(key, String(value))
+  }
+}
+
+function isBodyInit(value: unknown): value is BodyInit {
+  return (
+    typeof value === 'string' ||
+    value instanceof Blob ||
+    value instanceof FormData ||
+    value instanceof URLSearchParams ||
+    value instanceof ArrayBuffer ||
+    ArrayBuffer.isView(value)
+  )
+}
+
 /**
  * Typed client for fetching posts, categories, and media from WordPress.
  *
@@ -93,9 +118,10 @@ export interface RequestOptions {
  * const post = await client.post('hello-world')
  */
 export class WordpressClient {
-  private readonly http: AxiosInstance
-  private readonly siteHttp: AxiosInstance
-  private readonly siteBaseURL: string
+  private readonly apiBaseURL: string
+  private readonly siteApiBaseURL: string
+  private readonly timeout: number
+  private readonly retries: number
   private readonly cache: TTLCache<unknown> | null
   private readonly inflight = new Map<string, Promise<unknown>>()
 
@@ -109,31 +135,12 @@ export class WordpressClient {
       throw new Error('WordpressClient: baseURL is required')
     }
 
-    this.siteBaseURL = baseURL.replace(/\/$/, '')
+    const normalizedBaseURL = baseURL.replace(/\/$/, '')
 
-    const retryConfig = {
-      retries: retry?.retries ?? 3,
-      retryDelay: exponentialDelay,
-      retryCondition: (error: AxiosError) =>
-        isNetworkOrIdempotentRequestError(error) || error.response?.status === 408 || error.response?.status === 429,
-    }
-
-    const errorInterceptor = (error: AxiosError) => this.handleError(error)
-
-    this.http = axios.create({
-      baseURL: `${this.siteBaseURL}/wp-json/${namespace}`,
-      timeout,
-    })
-    axiosRetry(this.http, retryConfig)
-    this.http.interceptors.response.use((r) => r, errorInterceptor)
-
-    this.siteHttp = axios.create({
-      baseURL: `${this.siteBaseURL}/wp-json`,
-      timeout,
-    })
-    axiosRetry(this.siteHttp, retryConfig)
-    this.siteHttp.interceptors.response.use((r) => r, errorInterceptor)
-
+    this.apiBaseURL = `${normalizedBaseURL}/wp-json/${namespace}`
+    this.siteApiBaseURL = `${normalizedBaseURL}/wp-json`
+    this.timeout = timeout
+    this.retries = retry?.retries ?? 3
     this.cache = cache === false ? null : new TTLCache(cache)
   }
 
@@ -153,7 +160,6 @@ export class WordpressClient {
   async posts(params: PostQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Post>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawPost[]>(
-      this.http,
       '/posts',
       {
         _embed: true,
@@ -180,7 +186,6 @@ export class WordpressClient {
    */
   async post(slug: string, options?: RequestOptions): Promise<Post | null> {
     const response = await this.dedupGet<RawPost[]>(
-      this.http,
       '/posts',
       {
         slug,
@@ -198,7 +203,6 @@ export class WordpressClient {
    */
   async postById(id: number, options?: RequestOptions): Promise<Post> {
     const response = await this.dedupGet<RawPost>(
-      this.http,
       `/posts/${id}`,
       {
         _embed: true,
@@ -219,7 +223,6 @@ export class WordpressClient {
   async pages(params: PageQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Page>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawPage[]>(
-      this.http,
       '/pages',
       {
         _embed: true,
@@ -243,7 +246,6 @@ export class WordpressClient {
    */
   async page(slug: string, options?: RequestOptions): Promise<Page | null> {
     const response = await this.dedupGet<RawPage[]>(
-      this.http,
       '/pages',
       {
         slug,
@@ -261,7 +263,6 @@ export class WordpressClient {
    */
   async pageById(id: number, options?: RequestOptions): Promise<Page> {
     const response = await this.dedupGet<RawPage>(
-      this.http,
       `/pages/${id}`,
       {
         _embed: true,
@@ -282,7 +283,6 @@ export class WordpressClient {
   async categories(params: TaxonomyQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Category>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawCategory[]>(
-      this.http,
       '/categories',
       {
         page,
@@ -302,7 +302,6 @@ export class WordpressClient {
    */
   async category(slug: string, options?: RequestOptions): Promise<Category | null> {
     const response = await this.dedupGet<RawCategory[]>(
-      this.http,
       '/categories',
       {
         slug,
@@ -323,7 +322,6 @@ export class WordpressClient {
   async tags(params: TaxonomyQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Tag>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawTag[]>(
-      this.http,
       '/tags',
       {
         page,
@@ -343,7 +341,6 @@ export class WordpressClient {
    */
   async tag(slug: string, options?: RequestOptions): Promise<Tag | null> {
     const response = await this.dedupGet<RawTag[]>(
-      this.http,
       '/tags',
       {
         slug,
@@ -364,7 +361,6 @@ export class WordpressClient {
   async users(params: UsersQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Author>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawAuthor[]>(
-      this.http,
       '/users',
       {
         page,
@@ -384,7 +380,6 @@ export class WordpressClient {
    */
   async user(slug: string, options?: RequestOptions): Promise<Author | null> {
     const response = await this.dedupGet<RawAuthor[]>(
-      this.http,
       '/users',
       {
         slug,
@@ -402,7 +397,7 @@ export class WordpressClient {
    * @throws {WordpressNotFoundError} If the media doesn't exist
    */
   async media(id: number, options?: RequestOptions): Promise<Media> {
-    const response = await this.dedupGet<RawMedia>(this.http, `/media/${id}`, undefined, options?.signal)
+    const response = await this.dedupGet<RawMedia>(`/media/${id}`, undefined, options?.signal)
     return toMedia(response.data)
   }
 
@@ -415,7 +410,6 @@ export class WordpressClient {
   async mediaList(params: MediaQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<Media>> {
     const { page = 1, per_page = 10, ...rest } = params
     const response = await this.dedupGet<RawMedia[]>(
-      this.http,
       '/media',
       {
         page,
@@ -440,7 +434,6 @@ export class WordpressClient {
   async menus(params: MenuQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<NavigationMenu>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawNavigationMenu[]>(
-      this.http,
       '/menus',
       {
         page,
@@ -464,7 +457,6 @@ export class WordpressClient {
   async menuItems(params: MenuItemQueryParams = {}, options?: RequestOptions): Promise<PaginatedResponse<MenuItem>> {
     const { page = 1, per_page = 100, ...rest } = params
     const response = await this.dedupGet<RawMenuItem[]>(
-      this.http,
       '/menu-items',
       {
         page,
@@ -502,7 +494,7 @@ export class WordpressClient {
     params?: Record<string, unknown>,
     options?: RequestOptions,
   ): Promise<PaginatedResponse<T>> {
-    const response = await this.dedupGet<T[]>(this.http, endpoint, params, options?.signal)
+    const response = await this.dedupGet<T[]>(endpoint, params, options?.signal)
     const page = (params?.page as number) ?? 1
     const perPage = (params?.per_page as number) ?? 10
     return extractPagination(response, page, perPage)
@@ -516,7 +508,9 @@ export class WordpressClient {
    */
   async cacheVersion(): Promise<string | null> {
     try {
-      const response = await this.dedupGet<{ version: string }>(this.siteHttp, '/worang/v1/cache-version')
+      const response = await this.dedupGet<{ version: string }>('/worang/v1/cache-version', undefined, undefined, {
+        base: 'site',
+      })
       return String(response.data.version)
     } catch {
       return null
@@ -530,51 +524,122 @@ export class WordpressClient {
     this.cache?.clear()
   }
 
-  private dedupGet<T>(instance: AxiosInstance, url: string, params?: Record<string, unknown>, signal?: AbortSignal) {
-    const key = `${url}:${JSON.stringify(params ?? {})}`
+  private dedupGet<T>(
+    url: string,
+    params?: Record<string, unknown>,
+    signal?: AbortSignal,
+    options: { base?: 'api' | 'site' } = {},
+  ): Promise<HttpResponse<T>> {
+    const key = `${options.base ?? 'api'}:${url}:${JSON.stringify(params ?? {})}`
 
     if (this.cache) {
-      const cached = this.cache.get(key)
-      if (cached) return cached as Promise<import('axios').AxiosResponse<T>>
+      const cached = this.cache.get(key) as HttpResponse<T> | undefined
+      if (cached) {
+        return Promise.resolve(cached)
+      }
     }
 
     return dedup(this.inflight, key, async () => {
-      const response = await instance.get<T>(url, {
-        ...(params ? { params } : {}),
-        ...(signal ? { signal } : {}),
+      const response = await this.request<T>('GET', url, {
+        params,
+        signal,
+        base: options.base,
+        idempotent: true,
       })
       this.cache?.set(key, response)
       return response
     })
   }
 
+  private async request<T>(
+    method: string,
+    path: string,
+    options: {
+      params?: Record<string, unknown>
+      signal?: AbortSignal
+      base?: 'api' | 'site'
+      headers?: HeadersInit
+      body?: unknown
+      idempotent?: boolean
+    } = {},
+  ): Promise<HttpResponse<T>> {
+    const baseURL = options.base === 'site' ? this.siteApiBaseURL : this.apiBaseURL
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    const url = new URL(`${baseURL}${normalizedPath}`)
+
+    if (options.params) {
+      appendQueryParams(url.searchParams, options.params)
+    }
+
+    const headers = new Headers(options.headers)
+    headers.set('Accept', 'application/json')
+
+    let body: BodyInit | undefined
+    if (options.body !== undefined) {
+      if (isBodyInit(options.body)) {
+        body = options.body
+      } else {
+        headers.set('Content-Type', 'application/json')
+        body = JSON.stringify(options.body)
+      }
+    }
+
+    try {
+      const response = await fetchWithRetry<T>(
+        url.toString(),
+        {
+          method,
+          headers,
+          ...(body !== undefined ? { body } : {}),
+        },
+        {
+          retries: this.retries,
+          idempotent: options.idempotent,
+          signal: options.signal,
+          timeoutMs: this.timeout,
+        },
+      )
+
+      if (response.status >= 400) {
+        this.handleError(response, url.toString())
+      }
+
+      return response
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw error
+      }
+
+      if (error instanceof WordpressError) {
+        throw error
+      }
+
+      throw new WordpressError(error instanceof Error ? error.message : 'Unknown request failure')
+    }
+  }
+
   // ---- Error Handling ----
 
-  private handleError(error: AxiosError): never {
-    const requestUrl = error.config?.url ?? 'unknown'
+  private handleError(response: HttpResponse<unknown>, requestUrl: string): never {
+    const status = response.status
+    const raw = response.data
+    const data =
+      typeof raw === 'object' && raw !== null
+        ? (raw as { message?: string; code?: string; data?: { params?: Record<string, string> } })
+        : undefined
+    const message = data?.message || `Request failed with status ${status}`
 
-    if (error.response) {
-      const status = error.response.status
-      const raw = error.response.data
-      const data =
-        typeof raw === 'object' && raw !== null
-          ? (raw as { message?: string; code?: string; data?: { params?: Record<string, string> } })
-          : undefined
-      const message = data?.message || error.message
-
-      if (status === 404) {
-        throw new WordpressNotFoundError('Resource', requestUrl)
-      }
-      if (status === 401 || status === 403) {
-        throw new WordpressAuthError(message, status)
-      }
-      if (status === 400) {
-        const params = data?.data?.params
-        const details = params ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]])) : undefined
-        throw new WordpressValidationError(message, details)
-      }
-      throw new WordpressError(message, status, data?.code)
+    if (status === 404) {
+      throw new WordpressNotFoundError('Resource', requestUrl)
     }
-    throw new WordpressError(error.message)
+    if (status === 401 || status === 403) {
+      throw new WordpressAuthError(message, status)
+    }
+    if (status === 400) {
+      const params = data?.data?.params
+      const details = params ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]])) : undefined
+      throw new WordpressValidationError(message, details)
+    }
+    throw new WordpressError(message, status, data?.code)
   }
 }
