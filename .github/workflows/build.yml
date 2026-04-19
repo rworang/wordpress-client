@@ -53,6 +53,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: PHP lint companion plugin
+        run: php -l companion-plugin/worang-client-companion.php
+
       - name: Build
         run: pnpm build
 

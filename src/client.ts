@@ -143,9 +143,7 @@ function appendQueryParams(searchParams: URLSearchParams, params: Record<string,
     if (value === undefined || value === null) continue
 
     if (Array.isArray(value)) {
-      for (const item of value) {
-        searchParams.append(key, String(item))
-      }
+      searchParams.set(key, value.map((item) => String(item)).join(','))
       continue
     }
 
