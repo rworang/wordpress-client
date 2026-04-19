@@ -596,6 +596,62 @@ export class WordpressClient {
     return response.data.length ? toTag(response.data[0]) : null
   }
 
+  /**
+   * Create a tag. Also invalidates the cached `/posts` list because post embeds include term data.
+   */
+  async createTag(payload: TermWritePayload, options?: RequestOptions): Promise<Tag> {
+    const response = await this.request<RawTag>({
+      method: 'POST',
+      path: '/tags',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toTag(response.data)
+  }
+
+  /**
+   * Update an existing tag. Also invalidates the cached `/posts` list.
+   */
+  async updateTag(id: number, payload: Partial<TermWritePayload>, options?: RequestOptions): Promise<Tag> {
+    const response = await this.request<RawTag>({
+      method: 'POST',
+      path: `/tags/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toTag(response.data)
+  }
+
+  /**
+   * Permanently delete a tag by default. Set force to false to move it to trash instead.
+   */
+  async deleteTag(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Tag }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawTag }>({
+      method: 'DELETE',
+      path: `/tags/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous tag')
+    }
+
+    return {
+      deleted: true,
+      previous: toTag(response.data.previous),
+    }
+  }
+
   // ---- Users ----
 
   /**
