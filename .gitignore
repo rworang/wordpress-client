@@ -9,6 +9,7 @@ node_modules
 
 # Build output
 dist/
+companion-plugin/worang-client-companion.zip
 
 # OS
 .DS_Store
