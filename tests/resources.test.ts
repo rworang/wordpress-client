@@ -32,28 +32,28 @@ describe('defineResource', () => {
       const store: Widget[] = [{ id: 1, name: 'First' }]
 
       server.use(
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, () => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/widgets`, () => {
           return HttpResponse.json(store, {
             headers: { 'x-wp-total': String(store.length), 'x-wp-totalpages': '1' },
           })
         }),
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, ({ params }) => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/widgets/:id`, ({ params }) => {
           const found = store.find((w) => w.id === Number(params.id))
           return HttpResponse.json(found)
         }),
-        http.post(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, async ({ request }) => {
+        http.post(`${BASE_URL}/wp-json/wp/v2/widgets`, async ({ request }) => {
           const body = (await request.json()) as WidgetPayload
           const item = { id: store.length + 1, name: body.name }
           store.push(item)
           return HttpResponse.json(item)
         }),
-        http.post(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, async ({ request, params }) => {
+        http.post(`${BASE_URL}/wp-json/wp/v2/widgets/:id`, async ({ request, params }) => {
           const body = (await request.json()) as Partial<WidgetPayload>
           const item = store.find((w) => w.id === Number(params.id))!
           if (body.name !== undefined) item.name = body.name
           return HttpResponse.json(item)
         }),
-        http.delete(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, ({ params }) => {
+        http.delete(`${BASE_URL}/wp-json/wp/v2/widgets/:id`, ({ params }) => {
           const idx = store.findIndex((w) => w.id === Number(params.id))
           const [previous] = store.splice(idx, 1)
           return HttpResponse.json({ deleted: true, previous })
@@ -66,7 +66,7 @@ describe('defineResource', () => {
         auth: { username: 'alice', appPassword: 'secret' },
       })
 
-      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/widgets' })
 
       const listed = await widgets.list()
       expect(listed.data).toHaveLength(1)
@@ -91,7 +91,7 @@ describe('defineResource', () => {
       const item: Widget = { id: 7, name: 'Soft target' }
 
       server.use(
-        http.delete(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, ({ request, params }) => {
+        http.delete(`${BASE_URL}/wp-json/wp/v2/widgets/:id`, ({ request, params }) => {
           const force = new URL(request.url).searchParams.get('force')
           if (force === 'false') {
             return HttpResponse.json({ ...item, id: Number(params.id) })
@@ -105,7 +105,7 @@ describe('defineResource', () => {
         retry: { retries: 0 },
         auth: { username: 'alice', appPassword: 'secret' },
       })
-      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/widgets' })
 
       const result = await widgets.delete(7, { force: false })
 
@@ -117,7 +117,7 @@ describe('defineResource', () => {
 
     it('get(slug) resolves via ?slug= query', async () => {
       server.use(
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, ({ request }) => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/widgets`, ({ request }) => {
           const slug = new URL(request.url).searchParams.get('slug')
           if (slug === 'found') {
             return HttpResponse.json([{ id: 99, name: 'Found' }])
@@ -127,7 +127,7 @@ describe('defineResource', () => {
       )
 
       const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
-      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/widgets' })
 
       const found = await widgets.get('found')
       expect(found.id).toBe(99)
@@ -137,7 +137,7 @@ describe('defineResource', () => {
 
     it('enforces auth on writes', async () => {
       const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
-      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/widgets' })
 
       await expect(widgets.create({ name: 'x' })).rejects.toThrow(WordpressAuthError)
       await expect(widgets.update(1, { name: 'x' })).rejects.toThrow(WordpressAuthError)
@@ -161,7 +161,7 @@ describe('defineResource', () => {
             headers: { 'x-wp-total': '0', 'x-wp-totalpages': '1' },
           })
         }),
-        http.post(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, () => HttpResponse.json({ id: 1, name: 'x' })),
+        http.post(`${BASE_URL}/wp-json/wp/v2/widgets`, () => HttpResponse.json({ id: 1, name: 'x' })),
       )
 
       const client = new WordpressClient({
@@ -175,7 +175,7 @@ describe('defineResource', () => {
       await client.request({ method: 'GET', path: '/bar' })
 
       const widgets = client.defineResource<Widget, WidgetPayload>({
-        path: '/worang/v1/widgets',
+        path: '/widgets',
         invalidates: ['/foo', '/bar'],
       })
       await widgets.create({ name: 'x' })
@@ -189,7 +189,7 @@ describe('defineResource', () => {
 
     it('validates responses against itemSchema and throws WordpressSchemaError on mismatch', async () => {
       server.use(
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, () => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/widgets/:id`, () => {
           return HttpResponse.json({ id: 'not-a-number', name: 'x' })
         }),
       )
@@ -197,7 +197,7 @@ describe('defineResource', () => {
       const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
       const schema = z.object({ id: z.number(), name: z.string() })
       const widgets = client.defineResource<Widget, WidgetPayload>({
-        path: '/worang/v1/widgets',
+        path: '/widgets',
         itemSchema: schema,
       })
 
@@ -226,14 +226,14 @@ describe('defineResource', () => {
     it('threads custom pagination params through to the request', async () => {
       let observedPerPage: string | null = null
       server.use(
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, ({ request }) => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/widgets`, ({ request }) => {
           observedPerPage = new URL(request.url).searchParams.get('per_page')
           return HttpResponse.json([])
         }),
       )
 
       const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
-      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/widgets' })
 
       await widgets.list({ per_page: 5 })
       expect(observedPerPage).toBe('5')
@@ -243,10 +243,10 @@ describe('defineResource', () => {
   describe('singleton resource', () => {
     it('exposes only get and update', async () => {
       server.use(
-        http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/site-config`, () => {
+        http.get(`${BASE_URL}/wp-json/wp/v2/site-config`, () => {
           return HttpResponse.json({ title: 'My Site', tagline: 'Welcome' })
         }),
-        http.post(`${BASE_URL}/wp-json/wp/v2/worang/v1/site-config`, async ({ request }) => {
+        http.post(`${BASE_URL}/wp-json/wp/v2/site-config`, async ({ request }) => {
           const body = (await request.json()) as Partial<SiteConfigPayload>
           return HttpResponse.json({ title: body.title ?? 'My Site', tagline: body.tagline ?? 'Welcome' })
         }),
@@ -259,7 +259,7 @@ describe('defineResource', () => {
       })
 
       const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
-        path: '/worang/v1/site-config',
+        path: '/site-config',
         singleton: true,
       })
 

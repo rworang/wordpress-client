@@ -342,6 +342,7 @@ interface ReviewPayload {
 
 const reviews = client.defineResource<Review, ReviewPayload>({
   path: '/worang/v1/reviews',
+  base: 'site', // plugin-registered namespace — resolves to /wp-json/worang/v1/reviews
   invalidates: ['/worang/v1/reviews'], // optional extra prefixes busted after writes
 })
 
@@ -352,6 +353,12 @@ const created = await reviews.create({ title: 'Great', rating: 5 })
 const updated = await reviews.update(created.id, { rating: 4 })
 await reviews.delete(created.id)
 ```
+
+> **Pick the right `base`.** Use `base: 'site'` when `path` is already a full
+> namespace (`worang/v1/...`, `wc/v3/...`). The default `base: 'api'` prefixes
+> `/wp-json/wp/v2/`, so it's only correct when your endpoint is registered
+> under the core namespace (e.g. a custom post type). Getting this wrong
+> silently targets the wrong URL.
 
 ### Singleton resource
 
@@ -367,6 +374,7 @@ interface SiteConfigPayload {
 
 const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
   path: '/worang/v1/site-config',
+  base: 'site',
   singleton: true, // overload narrows the return type to { get, update }
 })
 

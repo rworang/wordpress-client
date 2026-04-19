@@ -971,7 +971,11 @@ export class WordpressClient {
    * when `singleton: true`, otherwise a full CRUD shape.
    *
    * @example
-   * const reviews = client.defineResource<Review, ReviewPayload>({ path: '/worang/v1/reviews' })
+   * // Plugin-registered namespace needs base:'site' to avoid the /wp-json/wp/v2/ prefix.
+   * const reviews = client.defineResource<Review, ReviewPayload>({
+   *   path: '/worang/v1/reviews',
+   *   base: 'site',
+   * })
    * const { data } = await reviews.list({ per_page: 20 })
    */
   defineResource<Item, Payload>(
