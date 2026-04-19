@@ -501,6 +501,62 @@ export class WordpressClient {
     return response.data.length ? toCategory(response.data[0]) : null
   }
 
+  /**
+   * Create a category. Also invalidates the cached `/posts` list because post embeds include term data.
+   */
+  async createCategory(payload: TermWritePayload, options?: RequestOptions): Promise<Category> {
+    const response = await this.request<RawCategory>({
+      method: 'POST',
+      path: '/categories',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toCategory(response.data)
+  }
+
+  /**
+   * Update an existing category. Also invalidates the cached `/posts` list.
+   */
+  async updateCategory(id: number, payload: Partial<TermWritePayload>, options?: RequestOptions): Promise<Category> {
+    const response = await this.request<RawCategory>({
+      method: 'POST',
+      path: `/categories/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toCategory(response.data)
+  }
+
+  /**
+   * Permanently delete a category by default. Set force to false to move it to trash instead.
+   */
+  async deleteCategory(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Category }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawCategory }>({
+      method: 'DELETE',
+      path: `/categories/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous category')
+    }
+
+    return {
+      deleted: true,
+      previous: toCategory(response.data.previous),
+    }
+  }
+
   // ---- Tags ----
 
   /**
