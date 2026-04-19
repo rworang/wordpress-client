@@ -13,7 +13,7 @@
  * const hasMore = pagination.page < pagination.totalPages
  */
 
-import type { AxiosResponse } from 'axios'
+import type { HttpResponse } from './http'
 
 /**
  * Response wrapper containing data and pagination metadata.
@@ -40,15 +40,15 @@ export interface PaginatedResponse<T> {
  * Extracts pagination info from WordPress REST API response headers.
  */
 export function extractPagination<T>(
-  response: AxiosResponse<T[]>,
+  response: HttpResponse<T[]>,
   page: number = 1,
   perPage: number = 10,
 ): PaginatedResponse<T> {
   return {
     data: response.data,
     pagination: {
-      total: parseInt(response.headers['x-wp-total'] || '0', 10),
-      totalPages: parseInt(response.headers['x-wp-totalpages'] || '1', 10),
+      total: parseInt(response.headers.get('x-wp-total') ?? '0', 10),
+      totalPages: parseInt(response.headers.get('x-wp-totalpages') ?? '1', 10),
       page,
       perPage,
     },

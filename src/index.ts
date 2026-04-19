@@ -12,7 +12,8 @@
 
 // Client
 export { WordpressClient } from './client'
-export type { WordpressClientOptions, RequestOptions } from './client'
+export type { WordpressClientOptions, RequestOptions, RequestConfig, RequestMethod } from './client'
+export type { AuthConfig, AuthCredentials, AuthResolver } from './types/auth'
 
 // Types
 export type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from './types/domain'
@@ -26,6 +27,15 @@ export type {
   MenuQueryParams,
   UsersQueryParams,
 } from './types/params'
+export type {
+  PostWritePayload,
+  PageWritePayload,
+  TermWritePayload,
+  MediaWritePayload,
+  DeleteResult,
+} from './types/payloads'
+export type { DefineResourceConfig, ResourceMethods, SingletonResourceMethods } from './resources'
+export type { CompanionNamespace, CompanionVersion } from './companion'
 
 export type { PaginatedResponse } from './utils/pagination'
 export { fetchAll } from './utils/pagination'
@@ -37,5 +47,7 @@ export {
   WordpressNotFoundError,
   WordpressAuthError,
   WordpressValidationError,
+  WordpressConflictError,
+  WordpressRateLimitError,
   WordpressSchemaError,
 } from './errors'
