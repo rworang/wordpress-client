@@ -26,7 +26,7 @@ companion-plugin/worang-client-companion.zip
 # Test coverage
 coverage
 
-# old
+# Internal workflow artifacts
 .claude/
-# .sprints/
+.sprints/
 .mcp.json
