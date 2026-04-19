@@ -706,6 +706,17 @@ export class WordpressClient {
     return response.data.length ? toAuthor(response.data[0]) : null
   }
 
+  /**
+   * Fetch a single user by their numeric ID.
+   *
+   * @throws {WordpressNotFoundError} If the user doesn't exist
+   * @throws {WordpressAuthError} If the WP host restricts user listings
+   */
+  async userById(id: number, options?: RequestOptions): Promise<Author> {
+    const response = await this.dedupGet<RawAuthor>(`/users/${id}`, undefined, options?.signal)
+    return toAuthor(response.data)
+  }
+
   // ---- Media ----
 
   /**

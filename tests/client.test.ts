@@ -174,6 +174,18 @@ describe('WordpressClient', () => {
       const author = await client.user('not-found')
       expect(author).toBeNull()
     })
+
+    it('fetches user by ID via userById', async () => {
+      const client = createClient()
+      const author = await client.userById(7)
+      expect(author.id).toBe(7)
+      expect(author.name).toBe('Jane Doe')
+    })
+
+    it('throws WordpressNotFoundError for missing user ID', async () => {
+      const client = createClient()
+      await expect(client.userById(999)).rejects.toThrow(WordpressNotFoundError)
+    })
   })
 
   describe('media', () => {
