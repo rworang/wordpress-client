@@ -558,10 +558,7 @@ export class WordpressClient {
    *
    * Returns a discriminated `DeleteResult<Category>`.
    */
-  async deleteCategory(
-    id: number,
-    options?: { force?: boolean } & RequestOptions,
-  ): Promise<DeleteResult<Category>> {
+  async deleteCategory(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Category>> {
     const force = options?.force ?? true
     const response = await this.request<{ deleted?: boolean; previous?: RawCategory } | RawCategory>({
       method: 'DELETE',
