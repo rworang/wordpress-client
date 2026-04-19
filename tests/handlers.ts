@@ -104,6 +104,43 @@ export const handlers = [
     return HttpResponse.json(rawPage)
   }),
 
+  // Create page
+  http.post(`${BASE}/wp/v2/pages`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawPage,
+      id: 202,
+      slug: typeof body.slug === 'string' ? body.slug : rawPage.slug,
+      title: { rendered: typeof body.title === 'string' ? body.title : rawPage.title.rendered },
+      content: { rendered: typeof body.content === 'string' ? body.content : rawPage.content.rendered },
+      excerpt: { rendered: typeof body.excerpt === 'string' ? body.excerpt : rawPage.excerpt.rendered },
+      parent: typeof body.parent === 'number' ? body.parent : rawPage.parent,
+      menu_order: typeof body.menu_order === 'number' ? body.menu_order : rawPage.menu_order,
+    })
+  }),
+
+  // Update page
+  http.post(`${BASE}/wp/v2/pages/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawPage,
+      id: Number(params.id),
+      slug: typeof body.slug === 'string' ? body.slug : rawPage.slug,
+      title: { rendered: typeof body.title === 'string' ? body.title : rawPage.title.rendered },
+      content: { rendered: typeof body.content === 'string' ? body.content : rawPage.content.rendered },
+      excerpt: { rendered: typeof body.excerpt === 'string' ? body.excerpt : rawPage.excerpt.rendered },
+      parent: typeof body.parent === 'number' ? body.parent : rawPage.parent,
+      menu_order: typeof body.menu_order === 'number' ? body.menu_order : rawPage.menu_order,
+    })
+  }),
+
+  // Delete page
+  http.delete(`${BASE}/wp/v2/pages/:id`, () => {
+    return HttpResponse.json({ deleted: true, previous: rawPage })
+  }),
+
   // Categories list
   http.get(`${BASE}/wp/v2/categories`, ({ request }) => {
     const url = new URL(request.url)
@@ -118,6 +155,37 @@ export const handlers = [
     })
   }),
 
+  // Create category
+  http.post(`${BASE}/wp/v2/categories`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawCategory,
+      id: 303,
+      slug: typeof body.slug === 'string' ? body.slug : rawCategory.slug,
+      name: typeof body.name === 'string' ? body.name : rawCategory.name,
+      description: typeof body.description === 'string' ? body.description : rawCategory.description,
+    })
+  }),
+
+  // Update category
+  http.post(`${BASE}/wp/v2/categories/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawCategory,
+      id: Number(params.id),
+      slug: typeof body.slug === 'string' ? body.slug : rawCategory.slug,
+      name: typeof body.name === 'string' ? body.name : rawCategory.name,
+      description: typeof body.description === 'string' ? body.description : rawCategory.description,
+    })
+  }),
+
+  // Delete category
+  http.delete(`${BASE}/wp/v2/categories/:id`, () => {
+    return HttpResponse.json({ deleted: true, previous: rawCategory })
+  }),
+
   // Tags list
   http.get(`${BASE}/wp/v2/tags`, ({ request }) => {
     const url = new URL(request.url)
@@ -130,6 +198,37 @@ export const handlers = [
     return HttpResponse.json([rawTag], {
       headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
     })
+  }),
+
+  // Create tag
+  http.post(`${BASE}/wp/v2/tags`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawTag,
+      id: 404,
+      slug: typeof body.slug === 'string' ? body.slug : rawTag.slug,
+      name: typeof body.name === 'string' ? body.name : rawTag.name,
+      description: typeof body.description === 'string' ? body.description : rawTag.description,
+    })
+  }),
+
+  // Update tag
+  http.post(`${BASE}/wp/v2/tags/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    return HttpResponse.json({
+      ...rawTag,
+      id: Number(params.id),
+      slug: typeof body.slug === 'string' ? body.slug : rawTag.slug,
+      name: typeof body.name === 'string' ? body.name : rawTag.name,
+      description: typeof body.description === 'string' ? body.description : rawTag.description,
+    })
+  }),
+
+  // Delete tag
+  http.delete(`${BASE}/wp/v2/tags/:id`, () => {
+    return HttpResponse.json({ deleted: true, previous: rawTag })
   }),
 
   // Users list

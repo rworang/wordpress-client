@@ -37,7 +37,7 @@ import type {
   UsersQueryParams,
 } from './types/params'
 import type { AuthConfig } from './types/auth'
-import type { PostWritePayload } from './types/payloads'
+import type { PostWritePayload, PageWritePayload, TermWritePayload } from './types/payloads'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -406,6 +406,62 @@ export class WordpressClient {
     return toPage(response.data)
   }
 
+  /**
+   * Create a page.
+   */
+  async createPage(payload: PageWritePayload, options?: RequestOptions): Promise<Page> {
+    const response = await this.request<RawPage>({
+      method: 'POST',
+      path: '/pages',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPage(response.data)
+  }
+
+  /**
+   * Update an existing page.
+   */
+  async updatePage(id: number, payload: Partial<PageWritePayload>, options?: RequestOptions): Promise<Page> {
+    const response = await this.request<RawPage>({
+      method: 'POST',
+      path: `/pages/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPage(response.data)
+  }
+
+  /**
+   * Permanently delete a page by default. Set force to false to move it to trash instead.
+   */
+  async deletePage(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Page }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawPage }>({
+      method: 'DELETE',
+      path: `/pages/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous page')
+    }
+
+    return {
+      deleted: true,
+      previous: toPage(response.data.previous),
+    }
+  }
+
   // ---- Categories ----
 
   /**
@@ -445,6 +501,62 @@ export class WordpressClient {
     return response.data.length ? toCategory(response.data[0]) : null
   }
 
+  /**
+   * Create a category. Also invalidates the cached `/posts` list because post embeds include term data.
+   */
+  async createCategory(payload: TermWritePayload, options?: RequestOptions): Promise<Category> {
+    const response = await this.request<RawCategory>({
+      method: 'POST',
+      path: '/categories',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toCategory(response.data)
+  }
+
+  /**
+   * Update an existing category. Also invalidates the cached `/posts` list.
+   */
+  async updateCategory(id: number, payload: Partial<TermWritePayload>, options?: RequestOptions): Promise<Category> {
+    const response = await this.request<RawCategory>({
+      method: 'POST',
+      path: `/categories/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toCategory(response.data)
+  }
+
+  /**
+   * Permanently delete a category by default. Set force to false to move it to trash instead.
+   */
+  async deleteCategory(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Category }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawCategory }>({
+      method: 'DELETE',
+      path: `/categories/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous category')
+    }
+
+    return {
+      deleted: true,
+      previous: toCategory(response.data.previous),
+    }
+  }
+
   // ---- Tags ----
 
   /**
@@ -482,6 +594,62 @@ export class WordpressClient {
       options?.signal,
     )
     return response.data.length ? toTag(response.data[0]) : null
+  }
+
+  /**
+   * Create a tag. Also invalidates the cached `/posts` list because post embeds include term data.
+   */
+  async createTag(payload: TermWritePayload, options?: RequestOptions): Promise<Tag> {
+    const response = await this.request<RawTag>({
+      method: 'POST',
+      path: '/tags',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toTag(response.data)
+  }
+
+  /**
+   * Update an existing tag. Also invalidates the cached `/posts` list.
+   */
+  async updateTag(id: number, payload: Partial<TermWritePayload>, options?: RequestOptions): Promise<Tag> {
+    const response = await this.request<RawTag>({
+      method: 'POST',
+      path: `/tags/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toTag(response.data)
+  }
+
+  /**
+   * Permanently delete a tag by default. Set force to false to move it to trash instead.
+   */
+  async deleteTag(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Tag }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawTag }>({
+      method: 'DELETE',
+      path: `/tags/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous tag')
+    }
+
+    return {
+      deleted: true,
+      previous: toTag(response.data.previous),
+    }
   }
 
   // ---- Users ----
