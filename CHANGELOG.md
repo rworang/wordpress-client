@@ -3,6 +3,32 @@
 All notable changes to `@worang/wordpress-client` will be documented in this
 file. This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `deletePost`/`Page`/`Category`/`Tag`/`Media` and
+  `defineResource.delete` now correctly handle `force: false` soft-deletes.
+  The previous shape (`{ deleted: true, previous }`) threw on the trash
+  response that WordPress returns for soft deletes. Methods now return a
+  discriminated `DeleteResult<T>` — `{ deleted: true, previous: T }` for
+  hard delete or `{ deleted: false, trashed: T }` for soft delete.
+- `defineResource` README and JSDoc examples now show `base: 'site'` for
+  plugin-registered namespaces — the previous examples silently targeted
+  `/wp-json/wp/v2/worang/v1/...`, which is not where a plugin endpoint
+  lives.
+
+### Changed
+
+- Minimum Node version raised to **Node 20**. Node 18 is EOL; this also
+  unblocks `@vitest/coverage-v8@4.x` which relies on
+  `node:inspector/promises` (Node 19+).
+
+### Added
+
+- `DeleteResult<T>` discriminated-union type exported from the package
+  root for typing delete responses.
+
 ## 0.2.0 — 2026-04-19 (Authoring)
 
 ### Added
