@@ -27,7 +27,7 @@ function isAbortError(error: unknown): error is Error {
   return error instanceof Error && error.name === 'AbortError'
 }
 
-function parseRetryAfterMs(headers: Headers): number | null {
+export function parseRetryAfterMs(headers: Headers): number | null {
   const retryAfter = headers.get('retry-after')
   if (!retryAfter) return null
 
@@ -101,14 +101,18 @@ async function wait(ms: number, signal?: AbortSignal): Promise<void> {
   })
 }
 
-async function parseResponseBody<T>(response: Response): Promise<T> {
+export async function parseResponseBody<T>(response: Response): Promise<T> {
   if (response.status === 204 || response.status === 205) {
     return undefined as T
   }
 
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
   if (contentType.includes('application/json') || contentType.includes('+json')) {
-    return (await response.json()) as T
+    try {
+      return (await response.json()) as T
+    } catch {
+      return undefined as T
+    }
   }
 
   const text = await response.text()
