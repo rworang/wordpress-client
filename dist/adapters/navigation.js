@@ -15,7 +15,7 @@ export const toMenuItem = (raw) => {
     }
     return {
         id: raw.id,
-        title: raw.title?.rendered ?? '',
+        title: raw.title.rendered,
         url: raw.url,
         menus: raw.menus,
         parent: raw.parent,

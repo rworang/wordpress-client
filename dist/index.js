@@ -13,5 +13,5 @@
 export { WordpressClient } from './client';
 export { fetchAll } from './utils/pagination';
 // Errors
-export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressSchemaError, } from './errors';
+export { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError, WordpressConflictError, WordpressRateLimitError, WordpressSchemaError, } from './errors';
 //# sourceMappingURL=index.js.map

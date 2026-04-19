@@ -40,6 +40,26 @@ export class TTLCache {
     delete(key) {
         return this.entries.delete(key);
     }
+    invalidate(predicate) {
+        const shouldDelete = (key) => {
+            if (typeof predicate === 'string') {
+                const normalizedKey = key.replace(/^[^:]+:/, '');
+                return normalizedKey.startsWith(predicate);
+            }
+            if (predicate instanceof RegExp) {
+                return predicate.test(key);
+            }
+            return predicate(key);
+        };
+        let removed = 0;
+        for (const key of this.entries.keys()) {
+            if (shouldDelete(key)) {
+                this.entries.delete(key);
+                removed++;
+            }
+        }
+        return removed;
+    }
     clear() {
         this.entries.clear();
     }

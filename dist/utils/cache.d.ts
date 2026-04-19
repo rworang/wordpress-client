@@ -20,6 +20,7 @@ export declare class TTLCache<T> {
     set(key: string, value: T): void;
     has(key: string): boolean;
     delete(key: string): boolean;
+    invalidate(predicate: string | RegExp | ((key: string) => boolean)): number;
     clear(): void;
 }
 //# sourceMappingURL=cache.d.ts.map

@@ -12,7 +12,7 @@
  * // Check if there are more pages
  * const hasMore = pagination.page < pagination.totalPages
  */
-import type { AxiosResponse } from 'axios';
+import type { HttpResponse } from './http';
 /**
  * Response wrapper containing data and pagination metadata.
  *
@@ -36,7 +36,7 @@ export interface PaginatedResponse<T> {
  * @internal
  * Extracts pagination info from WordPress REST API response headers.
  */
-export declare function extractPagination<T>(response: AxiosResponse<T[]>, page?: number, perPage?: number): PaginatedResponse<T>;
+export declare function extractPagination<T>(response: HttpResponse<T[]>, page?: number, perPage?: number): PaginatedResponse<T>;
 /**
  * Fetches all items across all pages by repeatedly calling a paginated method.
  *
