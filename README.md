@@ -2,7 +2,7 @@
 
 A typed WordPress REST API client for TypeScript and JavaScript. Designed for consuming, authoring, and managing WordPress content with runtime validation, automatic retries, caching, and request deduplication.
 
-As of v0.2.0 the client supports reads, writes, media uploads, and auth — while preserving graceful-degradation defaults (no `auth` option = read-only behavior; failures never leak WordPress-shaped errors).
+As of v0.3.0 the client supports reads, writes, media uploads, auth, companion plugin integration, and hardened retry/error handling — while preserving graceful-degradation defaults (no `auth` option = read-only behavior; failures never leak WordPress-shaped errors).
 
 ## Table of Contents
 
@@ -175,7 +175,7 @@ The following conditions trigger a retry on idempotent methods:
 
 ## 4. Authentication
 
-v0.2.0 adds optional write support via WordPress [Application Passwords](https://wordpress.org/documentation/article/application-passwords/). Every endpoint that writes, uploads, deletes, or updates requires credentials; reads remain public.
+v0.3.0 includes optional write support via WordPress [Application Passwords](https://wordpress.org/documentation/article/application-passwords/). Every endpoint that writes, uploads, deletes, or updates requires credentials; reads remain public.
 
 ### Static credentials
 
@@ -750,7 +750,7 @@ Invalidate cached entries by string prefix, `RegExp`, or predicate. Returns the 
 
 ### `cacheVersion()` — **deprecated**
 
-> Deprecated in v0.2.0. Use [`client.companion.cacheVersion()`](#8-companion-plugin) instead. The legacy method continues to hit the old `/worang/v1/cache-version` path and will be removed in v0.3.0.
+> Deprecated in v0.2.0. Use [`client.companion.cacheVersion()`](#8-companion-plugin) instead. The legacy method continues to hit the old `/worang/v1/cache-version` path and is planned for removal in a future release.
 
 ```typescript
 async cacheVersion(): Promise<string | null>
@@ -1056,7 +1056,7 @@ See [§8 Companion Plugin](#8-companion-plugin) for the opt-in `worang-client/v1
 
 ### Legacy: `cacheVersion()` — **deprecated**
 
-The legacy `cacheVersion()` method (targeting `/worang/v1/cache-version`) still works but is deprecated in favor of `client.companion.cacheVersion()` (targeting `/worang-client/v1/cache-version`). The legacy method is scheduled for removal in v0.3.0.
+The legacy `cacheVersion()` method (targeting `/worang/v1/cache-version`) still works but is deprecated in favor of `client.companion.cacheVersion()` (targeting `/worang-client/v1/cache-version`). The legacy method is scheduled for removal in a future release.
 
 ---
 
