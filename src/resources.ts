@@ -5,7 +5,12 @@ import type { DeleteResult } from './types/payloads'
 import { extractPagination } from './utils/pagination'
 import { WordpressSchemaError } from './errors'
 
-export interface DefineResourceConfig<Payload> {
+// The `_Payload` parameter is unused inside the interface but preserved as a phantom
+// generic so callers can continue to write `DefineResourceConfig<MyPayload>` for
+// documentation purposes. Inference of the actual payload type happens on the
+// `defineResource` / `createResource` overloads via their own `<Item, Payload>` pair.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface DefineResourceConfig<_Payload = unknown> {
   /** REST path without the API origin prefix, e.g. `/worang/v1/reviews`. */
   path: string
   /**
@@ -28,8 +33,6 @@ export interface DefineResourceConfig<Payload> {
    * `get` and `update`. When `false` (default), returns the full CRUD shape.
    */
   singleton?: boolean
-  /** Payload type (never referenced; helps TS infer `Payload`). */
-  _payload?: Payload
 }
 
 export interface ResourceMethods<Item, Payload> {
@@ -74,7 +77,7 @@ export function createResource<Item, Payload>(
 ): ResourceMethods<Item, Payload>
 export function createResource<Item, Payload>(
   client: WordpressClient,
-  config: DefineResourceConfig<Payload>,
+  config: DefineResourceConfig,
 ): ResourceMethods<Item, Payload> | SingletonResourceMethods<Item, Payload> {
   const { path, base, itemSchema, invalidates, singleton } = config
   const label = path
