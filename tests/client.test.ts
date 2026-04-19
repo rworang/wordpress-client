@@ -608,6 +608,7 @@ describe('WordpressClient', () => {
       const result = await client.deletePost(1)
 
       expect(result.deleted).toBe(true)
+      if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawPost.id)
       expect(result.previous.slug).toBe(rawPost.slug)
     })
@@ -726,6 +727,7 @@ describe('WordpressClient', () => {
       const result = await client.deletePage(2)
 
       expect(result.deleted).toBe(true)
+      if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawPage.id)
       expect(result.previous.slug).toBe(rawPage.slug)
     })
@@ -799,6 +801,7 @@ describe('WordpressClient', () => {
       const result = await client.deleteCategory(5)
 
       expect(result.deleted).toBe(true)
+      if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawCategory.id)
       expect(result.previous.slug).toBe(rawCategory.slug)
     })
@@ -840,6 +843,7 @@ describe('WordpressClient', () => {
       const result = await client.deleteTag(8)
 
       expect(result.deleted).toBe(true)
+      if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawTag.id)
       expect(result.previous.slug).toBe(rawTag.slug)
     })
@@ -949,6 +953,7 @@ describe('WordpressClient', () => {
       const result = await client.deleteMedia(10)
 
       expect(result.deleted).toBe(true)
+      if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawMedia.id)
     })
 

@@ -27,7 +27,13 @@ export type {
   MenuQueryParams,
   UsersQueryParams,
 } from './types/params'
-export type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from './types/payloads'
+export type {
+  PostWritePayload,
+  PageWritePayload,
+  TermWritePayload,
+  MediaWritePayload,
+  DeleteResult,
+} from './types/payloads'
 export type { DefineResourceConfig, ResourceMethods, SingletonResourceMethods } from './resources'
 export type { CompanionNamespace, CompanionVersion } from './companion'
 

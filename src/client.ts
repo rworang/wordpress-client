@@ -37,7 +37,13 @@ import type {
   UsersQueryParams,
 } from './types/params'
 import type { AuthConfig } from './types/auth'
-import type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from './types/payloads'
+import type {
+  PostWritePayload,
+  PageWritePayload,
+  TermWritePayload,
+  MediaWritePayload,
+  DeleteResult,
+} from './types/payloads'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -337,13 +343,13 @@ export class WordpressClient {
 
   /**
    * Permanently delete a post by default. Set force to false to move it to trash instead.
+   *
+   * Returns a discriminated `DeleteResult<Post>`: hard delete → `{ deleted: true, previous }`;
+   * soft delete → `{ deleted: false, trashed }`.
    */
-  async deletePost(
-    id: number,
-    options?: { force?: boolean } & RequestOptions,
-  ): Promise<{ deleted: true; previous: Post }> {
+  async deletePost(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Post>> {
     const force = options?.force ?? true
-    const response = await this.request<{ deleted?: boolean; previous?: RawPost }>({
+    const response = await this.request<{ deleted?: boolean; previous?: RawPost } | RawPost>({
       method: 'DELETE',
       path: `/posts/${id}`,
       params: { force: force ? 'true' : 'false' },
@@ -351,14 +357,15 @@ export class WordpressClient {
       signal: options?.signal,
     })
 
-    if (!response.data.previous) {
-      throw new WordpressError('Delete response did not include the previous post')
+    if (force) {
+      const body = response.data as { deleted?: boolean; previous?: RawPost }
+      if (!body.previous) {
+        throw new WordpressError('Delete response did not include the previous post')
+      }
+      return { deleted: true, previous: toPost(body.previous) }
     }
 
-    return {
-      deleted: true,
-      previous: toPost(response.data.previous),
-    }
+    return { deleted: false, trashed: toPost(response.data as RawPost) }
   }
 
   // ---- Pages ----
@@ -453,13 +460,12 @@ export class WordpressClient {
 
   /**
    * Permanently delete a page by default. Set force to false to move it to trash instead.
+   *
+   * Returns a discriminated `DeleteResult<Page>`.
    */
-  async deletePage(
-    id: number,
-    options?: { force?: boolean } & RequestOptions,
-  ): Promise<{ deleted: true; previous: Page }> {
+  async deletePage(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Page>> {
     const force = options?.force ?? true
-    const response = await this.request<{ deleted?: boolean; previous?: RawPage }>({
+    const response = await this.request<{ deleted?: boolean; previous?: RawPage } | RawPage>({
       method: 'DELETE',
       path: `/pages/${id}`,
       params: { force: force ? 'true' : 'false' },
@@ -467,14 +473,15 @@ export class WordpressClient {
       signal: options?.signal,
     })
 
-    if (!response.data.previous) {
-      throw new WordpressError('Delete response did not include the previous page')
+    if (force) {
+      const body = response.data as { deleted?: boolean; previous?: RawPage }
+      if (!body.previous) {
+        throw new WordpressError('Delete response did not include the previous page')
+      }
+      return { deleted: true, previous: toPage(body.previous) }
     }
 
-    return {
-      deleted: true,
-      previous: toPage(response.data.previous),
-    }
+    return { deleted: false, trashed: toPage(response.data as RawPage) }
   }
 
   // ---- Categories ----
@@ -548,13 +555,15 @@ export class WordpressClient {
 
   /**
    * Permanently delete a category by default. Set force to false to move it to trash instead.
+   *
+   * Returns a discriminated `DeleteResult<Category>`.
    */
   async deleteCategory(
     id: number,
     options?: { force?: boolean } & RequestOptions,
-  ): Promise<{ deleted: true; previous: Category }> {
+  ): Promise<DeleteResult<Category>> {
     const force = options?.force ?? true
-    const response = await this.request<{ deleted?: boolean; previous?: RawCategory }>({
+    const response = await this.request<{ deleted?: boolean; previous?: RawCategory } | RawCategory>({
       method: 'DELETE',
       path: `/categories/${id}`,
       params: { force: force ? 'true' : 'false' },
@@ -562,14 +571,15 @@ export class WordpressClient {
       signal: options?.signal,
     })
 
-    if (!response.data.previous) {
-      throw new WordpressError('Delete response did not include the previous category')
+    if (force) {
+      const body = response.data as { deleted?: boolean; previous?: RawCategory }
+      if (!body.previous) {
+        throw new WordpressError('Delete response did not include the previous category')
+      }
+      return { deleted: true, previous: toCategory(body.previous) }
     }
 
-    return {
-      deleted: true,
-      previous: toCategory(response.data.previous),
-    }
+    return { deleted: false, trashed: toCategory(response.data as RawCategory) }
   }
 
   // ---- Tags ----
@@ -643,13 +653,12 @@ export class WordpressClient {
 
   /**
    * Permanently delete a tag by default. Set force to false to move it to trash instead.
+   *
+   * Returns a discriminated `DeleteResult<Tag>`.
    */
-  async deleteTag(
-    id: number,
-    options?: { force?: boolean } & RequestOptions,
-  ): Promise<{ deleted: true; previous: Tag }> {
+  async deleteTag(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Tag>> {
     const force = options?.force ?? true
-    const response = await this.request<{ deleted?: boolean; previous?: RawTag }>({
+    const response = await this.request<{ deleted?: boolean; previous?: RawTag } | RawTag>({
       method: 'DELETE',
       path: `/tags/${id}`,
       params: { force: force ? 'true' : 'false' },
@@ -657,14 +666,15 @@ export class WordpressClient {
       signal: options?.signal,
     })
 
-    if (!response.data.previous) {
-      throw new WordpressError('Delete response did not include the previous tag')
+    if (force) {
+      const body = response.data as { deleted?: boolean; previous?: RawTag }
+      if (!body.previous) {
+        throw new WordpressError('Delete response did not include the previous tag')
+      }
+      return { deleted: true, previous: toTag(body.previous) }
     }
 
-    return {
-      deleted: true,
-      previous: toTag(response.data.previous),
-    }
+    return { deleted: false, trashed: toTag(response.data as RawTag) }
   }
 
   // ---- Users ----
@@ -768,13 +778,12 @@ export class WordpressClient {
 
   /**
    * Permanently delete a media item by default. Set force to false to move it to trash instead.
+   *
+   * Returns a discriminated `DeleteResult<Media>`.
    */
-  async deleteMedia(
-    id: number,
-    options?: { force?: boolean } & RequestOptions,
-  ): Promise<{ deleted: true; previous: Media }> {
+  async deleteMedia(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Media>> {
     const force = options?.force ?? true
-    const response = await this.request<{ deleted?: boolean; previous?: RawMedia }>({
+    const response = await this.request<{ deleted?: boolean; previous?: RawMedia } | RawMedia>({
       method: 'DELETE',
       path: `/media/${id}`,
       params: { force: force ? 'true' : 'false' },
@@ -782,14 +791,15 @@ export class WordpressClient {
       signal: options?.signal,
     })
 
-    if (!response.data.previous) {
-      throw new WordpressError('Delete response did not include the previous media item')
+    if (force) {
+      const body = response.data as { deleted?: boolean; previous?: RawMedia }
+      if (!body.previous) {
+        throw new WordpressError('Delete response did not include the previous media item')
+      }
+      return { deleted: true, previous: toMedia(body.previous) }
     }
 
-    return {
-      deleted: true,
-      previous: toMedia(response.data.previous),
-    }
+    return { deleted: false, trashed: toMedia(response.data as RawMedia) }
   }
 
   /**

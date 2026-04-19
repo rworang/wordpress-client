@@ -53,3 +53,21 @@ export interface MediaWritePayload {
   post?: number
   meta?: Record<string, unknown>
 }
+
+/**
+ * Discriminated result of a delete operation.
+ *
+ * WordPress returns two distinct shapes: a hard delete (`?force=true`) responds
+ * with `{ deleted: true, previous }`; a soft delete (`?force=false`) responds
+ * with the item itself stamped `status: 'trash'`.
+ *
+ * Consumers discriminate on the `deleted` flag:
+ *
+ *     const result = await client.deletePost(id, { force: false })
+ *     if (result.deleted) {
+ *       // hard delete — result.previous is the removed item
+ *     } else {
+ *       // soft delete — result.trashed is the item now in trash
+ *     }
+ */
+export type DeleteResult<T> = { deleted: true; previous: T } | { deleted: false; trashed: T }
