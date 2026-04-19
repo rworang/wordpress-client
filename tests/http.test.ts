@@ -16,6 +16,12 @@ describe('http utilities', () => {
       expect(parseRetryAfterMs(new Headers())).toBeNull()
       expect(parseRetryAfterMs(new Headers({ 'Retry-After': 'not-a-number' }))).toBeNull()
     })
+
+    it('parses HTTP-date values into milliseconds', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-04-20T00:00:00Z').getTime())
+
+      expect(parseRetryAfterMs(new Headers({ 'Retry-After': 'Mon, 20 Apr 2026 00:00:01 GMT' }))).toBe(1_000)
+    })
   })
 
   describe('parseResponseBody', () => {
@@ -161,6 +167,36 @@ describe('http utilities', () => {
       expect(fetchMock).toHaveBeenCalledTimes(2)
     })
 
+    it('waits for Retry-After before retrying a rate-limited request', async () => {
+      vi.useFakeTimers()
+
+      const controller = new AbortController()
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ message: 'slow down' }), { status: 429, headers: { 'Retry-After': '1' } }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      vi.stubGlobal('fetch', fetchMock)
+
+      const request = fetchWithRetry<{ ok: boolean }>(
+        'https://example.com',
+        { method: 'GET' },
+        { retries: 1, signal: controller.signal, timeoutMs: 5_000 },
+      )
+
+      await vi.advanceTimersByTimeAsync(1_000)
+      const response = await request
+
+      expect(response.data).toEqual({ ok: true })
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
     it('propagates AbortError immediately when the signal is already aborted', async () => {
       const controller = new AbortController()
       controller.abort(new DOMException('aborted', 'AbortError'))
@@ -194,7 +230,11 @@ describe('http utilities', () => {
       )
       vi.stubGlobal('fetch', fetchMock)
 
-      const request = fetchWithRetry('https://example.com', { method: 'GET' }, { signal: controller.signal, retries: 2 })
+      const request = fetchWithRetry(
+        'https://example.com',
+        { method: 'GET' },
+        { signal: controller.signal, retries: 2 },
+      )
       controller.abort(new DOMException('aborted', 'AbortError'))
 
       await expect(request).rejects.toMatchObject({ name: 'AbortError' })
