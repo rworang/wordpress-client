@@ -19,7 +19,6 @@ export interface PostWritePayload {
   password?: string
 }
 
-
 export interface PageWritePayload {
   title?: string
   content?: string
