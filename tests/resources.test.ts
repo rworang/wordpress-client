@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { z } from 'zod'
 import { server } from './server'
 import { WordpressClient } from '../src/client'
-import { WordpressAuthError, WordpressSchemaError } from '../src/errors'
+import { WordpressAuthError, WordpressNotFoundError, WordpressSchemaError } from '../src/errors'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -132,7 +132,7 @@ describe('defineResource', () => {
       const found = await widgets.get('found')
       expect(found.id).toBe(99)
 
-      await expect(widgets.get('missing')).rejects.toThrow(WordpressSchemaError)
+      await expect(widgets.get('missing')).rejects.toThrow(WordpressNotFoundError)
     })
 
     it('enforces auth on writes', async () => {
