@@ -260,6 +260,26 @@ export const handlers = [
     })
   }),
 
+  // Upload media (binary)
+  http.post(`${BASE}/wp/v2/media`, () => {
+    return HttpResponse.json({ ...rawMedia, id: 505 })
+  }),
+
+  // Update media metadata
+  http.post(`${BASE}/wp/v2/media/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as Record<string, unknown>
+    return HttpResponse.json({
+      ...rawMedia,
+      id: Number(params.id),
+      alt_text: typeof body.alt_text === 'string' ? body.alt_text : rawMedia.alt_text,
+    })
+  }),
+
+  // Delete media
+  http.delete(`${BASE}/wp/v2/media/:id`, () => {
+    return HttpResponse.json({ deleted: true, previous: rawMedia })
+  }),
+
   // Navigation menus
   http.get(`${BASE}/wp/v2/menus`, () => {
     return HttpResponse.json([rawNavigationMenu], {
