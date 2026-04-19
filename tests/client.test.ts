@@ -4,7 +4,7 @@ import { server } from './server'
 import { WordpressClient } from '../src/client'
 import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
 import { fetchAll } from '../src/utils/pagination'
-import { rawPost } from './fixtures/raw'
+import { rawPost, rawPage, rawCategory, rawTag } from './fixtures/raw'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -663,6 +663,253 @@ describe('WordpressClient', () => {
       await client.posts()
 
       expect(listCalls).toBe(2)
+    })
+  })
+
+  describe('page write operations', () => {
+    it('creates a page and returns the normalized Page shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const page = await client.createPage({
+        title: 'Created page',
+        content: '<p>Created page content</p>',
+        slug: 'created-page',
+        parent: 4,
+        menu_order: 7,
+      })
+
+      expect(page.id).toBe(202)
+      expect(page.title).toBe('Created page')
+      expect(page.slug).toBe('created-page')
+    })
+
+    it('updates a page and returns the updated Page shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const page = await client.updatePage(2, {
+        title: 'Updated page',
+        excerpt: '<p>Updated page excerpt</p>',
+      })
+
+      expect(page.id).toBe(2)
+      expect(page.title).toBe('Updated page')
+      expect(page.excerpt).toContain('Updated page excerpt')
+    })
+
+    it('deletes a page and returns the previous Page', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deletePage(2)
+
+      expect(result.deleted).toBe(true)
+      expect(result.previous.id).toBe(rawPage.id)
+      expect(result.previous.slug).toBe(rawPage.slug)
+    })
+
+    it('invalidates cached pages after createPage', async () => {
+      let listCalls = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/pages`, () => {
+          listCalls++
+          return HttpResponse.json([rawPage], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.pages()
+      await client.createPage({ title: 'Invalidate pages cache' })
+      await client.pages()
+
+      expect(listCalls).toBe(2)
+    })
+  })
+
+  describe('term write operations', () => {
+    it('creates a category and returns the normalized Category shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const category = await client.createCategory({
+        name: 'New Category',
+        slug: 'new-category',
+        description: 'Newly created',
+      })
+
+      expect(category.id).toBe(303)
+      expect(category.name).toBe('New Category')
+      expect(category.slug).toBe('new-category')
+    })
+
+    it('updates a category and returns the updated Category shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const category = await client.updateCategory(5, { name: 'Renamed' })
+
+      expect(category.id).toBe(5)
+      expect(category.name).toBe('Renamed')
+    })
+
+    it('deletes a category and returns the previous Category', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteCategory(5)
+
+      expect(result.deleted).toBe(true)
+      expect(result.previous.id).toBe(rawCategory.id)
+      expect(result.previous.slug).toBe(rawCategory.slug)
+    })
+
+    it('creates a tag and returns the normalized Tag shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const tag = await client.createTag({ name: 'New Tag', slug: 'new-tag' })
+
+      expect(tag.id).toBe(404)
+      expect(tag.name).toBe('New Tag')
+      expect(tag.slug).toBe('new-tag')
+    })
+
+    it('updates a tag and returns the updated Tag shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const tag = await client.updateTag(8, { description: 'Updated description' })
+
+      expect(tag.id).toBe(8)
+      expect(tag.description).toBe('Updated description')
+    })
+
+    it('deletes a tag and returns the previous Tag', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteTag(8)
+
+      expect(result.deleted).toBe(true)
+      expect(result.previous.id).toBe(rawTag.id)
+      expect(result.previous.slug).toBe(rawTag.slug)
+    })
+
+    it('requires auth for createPage, createCategory, and createTag', async () => {
+      const client = createClient()
+
+      await expect(client.createPage({ title: 'Private page' })).rejects.toThrow(WordpressAuthError)
+      await expect(client.createCategory({ name: 'Private category' })).rejects.toThrow(WordpressAuthError)
+      await expect(client.createTag({ name: 'Private tag' })).rejects.toThrow(WordpressAuthError)
+    })
+
+    it('invalidates both category and post caches after createCategory', async () => {
+      let postCount = 0
+      let categoryCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          postCount++
+          return HttpResponse.json([rawPost], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+        http.get(`${BASE_URL}/wp-json/wp/v2/categories`, () => {
+          categoryCount++
+          return HttpResponse.json([rawCategory], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.posts()
+      await client.categories()
+      await client.createCategory({ name: 'Cross invalidate' })
+      await client.posts()
+      await client.categories()
+
+      expect(postCount).toBe(2)
+      expect(categoryCount).toBe(2)
+    })
+
+    it('invalidates both tag and post caches after createTag', async () => {
+      let postCount = 0
+      let tagCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          postCount++
+          return HttpResponse.json([rawPost], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+        http.get(`${BASE_URL}/wp-json/wp/v2/tags`, () => {
+          tagCount++
+          return HttpResponse.json([rawTag], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.posts()
+      await client.tags()
+      await client.createTag({ name: 'Cross invalidate' })
+      await client.posts()
+      await client.tags()
+
+      expect(postCount).toBe(2)
+      expect(tagCount).toBe(2)
     })
   })
 
