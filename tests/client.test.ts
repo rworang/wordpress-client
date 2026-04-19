@@ -534,6 +534,38 @@ describe('WordpressClient', () => {
       expect(callCount).toBe(2)
     })
 
+    it('scopes invalidation to the resource when writing to a 3-segment namespace path', async () => {
+      let versionGetCount = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang/v1/cache-version`, () => {
+          versionGetCount++
+          return HttpResponse.json({ version: 'v1' })
+        }),
+        http.post(`${BASE_URL}/wp-json/worang-client/v1/sync`, () => HttpResponse.json({ ok: true })),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.cacheVersion()
+      // A write to a different 3-segment namespace must not sweep the whole `worang*`
+      // family out of cache. The heuristic targets `/worang-client/v1/sync` only.
+      await client.request({
+        method: 'POST',
+        path: '/worang-client/v1/sync',
+        base: 'site',
+        requireAuth: true,
+      })
+      await client.cacheVersion()
+
+      expect(versionGetCount).toBe(1)
+    })
+
     it('throws WordpressAuthError for write requests that require auth', async () => {
       const client = createClient()
 

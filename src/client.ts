@@ -169,8 +169,11 @@ function invalidationTargets(path: string): string[] {
     return ['/']
   }
 
-  const basePath =
-    segments[0] === 'worang' && segments.length >= 3 ? `/${segments.slice(0, 3).join('/')}` : `/${segments[0]}`
+  // Plugin-registered endpoints follow `namespace/version/resource` (≥3 segments); core
+  // endpoints are `resource` or `resource/:id` (1–2 segments). Slicing the first 3 segments
+  // for ≥3-segment paths gives plugin namespaces per-resource isolation without hard-coding
+  // any particular vendor string.
+  const basePath = segments.length >= 3 ? `/${segments.slice(0, 3).join('/')}` : `/${segments[0]}`
 
   if (basePath === '/categories') {
     return ['/categories', '/posts']
