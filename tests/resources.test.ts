@@ -274,5 +274,67 @@ describe('defineResource', () => {
       expect('create' in siteConfig).toBe(false)
       expect('delete' in siteConfig).toBe(false)
     })
+
+    it('throws WordpressAuthError when update() runs without auth', async () => {
+      const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
+      const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
+        path: '/site-config',
+        singleton: true,
+      })
+
+      await expect(siteConfig.update({ title: 'Nope' })).rejects.toThrow(WordpressAuthError)
+    })
+
+    it('throws WordpressSchemaError when get() response fails itemSchema validation', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/site-config`, () => {
+          return HttpResponse.json({ title: 42, tagline: 'Welcome' })
+        }),
+      )
+
+      const client = new WordpressClient({ baseURL: BASE_URL, retry: { retries: 0 } })
+      const schema = z.object({ title: z.string(), tagline: z.string() })
+      const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
+        path: '/site-config',
+        singleton: true,
+        itemSchema: schema,
+      })
+
+      await expect(siteConfig.get()).rejects.toThrow(WordpressSchemaError)
+    })
+
+    it('busts extra invalidation prefixes after update()', async () => {
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/site-config`, async ({ request }) => {
+          const body = (await request.json()) as Partial<SiteConfigPayload>
+          return HttpResponse.json({ title: body.title ?? 'Old', tagline: 'Welcome' })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      let invalidateCalls: string[] = []
+      const originalInvalidate = client.invalidate.bind(client)
+      client.invalidate = (pattern) => {
+        if (typeof pattern === 'string') invalidateCalls.push(pattern)
+        return originalInvalidate(pattern)
+      }
+
+      const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
+        path: '/site-config',
+        singleton: true,
+        invalidates: ['/posts', '/pages'],
+      })
+
+      await siteConfig.update({ title: 'New' })
+
+      expect(invalidateCalls).toContain('/posts')
+      expect(invalidateCalls).toContain('/pages')
+    })
   })
 })
