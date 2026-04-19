@@ -50,6 +50,12 @@ import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressVa
 import { dedup } from './utils/dedup'
 import { TTLCache, type CacheOptions } from './utils/cache'
 import { fetchWithRetry, type HttpResponse } from './utils/http'
+import {
+  createResource,
+  type DefineResourceConfig,
+  type ResourceMethods,
+  type SingletonResourceMethods,
+} from './resources'
 
 /**
  * Configuration options for the WordPress client.
@@ -924,6 +930,29 @@ export class WordpressClient {
   /** Invalidate cached entries by prefix, pattern, or predicate. */
   invalidate(pattern: string | RegExp | ((key: string) => boolean)): number {
     return this.cache?.invalidate(pattern) ?? 0
+  }
+
+  /**
+   * Wrap any REST endpoint as a typed resource. Returns `SingletonResourceMethods`
+   * when `singleton: true`, otherwise a full CRUD shape.
+   *
+   * @example
+   * const reviews = client.defineResource<Review, ReviewPayload>({ path: '/worang/v1/reviews' })
+   * const { data } = await reviews.list({ per_page: 20 })
+   */
+  defineResource<Item, Payload>(
+    config: DefineResourceConfig<Payload> & { singleton: true },
+  ): SingletonResourceMethods<Item, Payload>
+  defineResource<Item, Payload>(
+    config: DefineResourceConfig<Payload> & { singleton?: false },
+  ): ResourceMethods<Item, Payload>
+  defineResource<Item, Payload>(
+    config: DefineResourceConfig<Payload>,
+  ): ResourceMethods<Item, Payload> | SingletonResourceMethods<Item, Payload> {
+    if (config.singleton) {
+      return createResource<Item, Payload>(this, { ...config, singleton: true })
+    }
+    return createResource<Item, Payload>(this, { ...config, singleton: false })
   }
 
   private dedupGet<T>(
