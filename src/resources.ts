@@ -3,7 +3,7 @@ import type { WordpressClient, RequestOptions } from './client'
 import type { PaginatedResponse } from './utils/pagination'
 import type { DeleteResult } from './types/payloads'
 import { extractPagination } from './utils/pagination'
-import { WordpressSchemaError } from './errors'
+import { WordpressNotFoundError, WordpressSchemaError } from './errors'
 
 // The `_Payload` parameter is unused inside the interface but preserved as a phantom
 // generic so callers can continue to write `DefineResourceConfig<MyPayload>` for
@@ -145,7 +145,7 @@ export function createResource<Item, Payload>(
         signal: options?.signal,
       })
       if (!response.data.length) {
-        throw new WordpressSchemaError(label, [{ path: [], message: `No item found with slug "${idOrSlug}"` }])
+        throw new WordpressNotFoundError(label, idOrSlug)
       }
       return validateItem<Item>(itemSchema, response.data[0], label)
     },

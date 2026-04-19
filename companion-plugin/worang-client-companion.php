@@ -19,7 +19,8 @@ const WORANG_CLIENT_CACHE_OPTION = 'worang_client_cache_version';
 
 function worang_client_companion_bump_cache_version(): void
 {
-    update_option(WORANG_CLIENT_CACHE_OPTION, (string) time(), false);
+    $token = sprintf('%.6f', microtime(true));
+    update_option(WORANG_CLIENT_CACHE_OPTION, $token, false);
 }
 
 function worang_client_companion_activate(): void

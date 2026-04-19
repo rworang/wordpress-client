@@ -300,6 +300,22 @@ describe('WordpressClient', () => {
       const client = createClient()
       await client.fetchCustom('/products', { per_page: 5 })
     })
+
+    it('serializes array query params in a WordPress-compatible comma-separated form', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/products`, ({ request }) => {
+          const url = new URL(request.url)
+          expect(url.searchParams.get('categories')).toBe('3,5')
+          expect(url.searchParams.getAll('categories')).toEqual(['3,5'])
+          return HttpResponse.json([], {
+            headers: { 'x-wp-total': '0', 'x-wp-totalpages': '0' },
+          })
+        }),
+      )
+
+      const client = createClient()
+      await client.fetchCustom('/products', { categories: [3, 5] })
+    })
   })
 
   describe('auth', () => {
