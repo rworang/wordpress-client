@@ -59,6 +59,9 @@ function validateItem<Item>(schema: z.ZodType<unknown> | undefined, raw: unknown
   return result.data as Item
 }
 
+// Complements invalidationTargets() in src/client.ts (~line 164): that helper busts the
+// resource's own path automatically inside client.request(); this one adds any
+// user-supplied `invalidates` prefixes and skips self to avoid double-work.
 function applyExtraInvalidations(client: WordpressClient, prefixes: string[] | undefined, resourcePath: string): void {
   if (!prefixes) return
   for (const prefix of prefixes) {
