@@ -37,7 +37,7 @@ import type {
   UsersQueryParams,
 } from './types/params'
 import type { AuthConfig } from './types/auth'
-import type { PostWritePayload } from './types/payloads'
+import type { PostWritePayload, PageWritePayload, TermWritePayload } from './types/payloads'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -404,6 +404,62 @@ export class WordpressClient {
       options?.signal,
     )
     return toPage(response.data)
+  }
+
+  /**
+   * Create a page.
+   */
+  async createPage(payload: PageWritePayload, options?: RequestOptions): Promise<Page> {
+    const response = await this.request<RawPage>({
+      method: 'POST',
+      path: '/pages',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPage(response.data)
+  }
+
+  /**
+   * Update an existing page.
+   */
+  async updatePage(id: number, payload: Partial<PageWritePayload>, options?: RequestOptions): Promise<Page> {
+    const response = await this.request<RawPage>({
+      method: 'POST',
+      path: `/pages/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPage(response.data)
+  }
+
+  /**
+   * Permanently delete a page by default. Set force to false to move it to trash instead.
+   */
+  async deletePage(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Page }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawPage }>({
+      method: 'DELETE',
+      path: `/pages/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous page')
+    }
+
+    return {
+      deleted: true,
+      previous: toPage(response.data.previous),
+    }
   }
 
   // ---- Categories ----
