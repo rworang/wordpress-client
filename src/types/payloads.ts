@@ -44,3 +44,12 @@ export interface TermWritePayload {
   parent?: number
   meta?: Record<string, unknown>
 }
+
+export interface MediaWritePayload {
+  title?: string
+  alt_text?: string
+  caption?: string
+  description?: string
+  post?: number
+  meta?: Record<string, unknown>
+}
