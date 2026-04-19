@@ -321,6 +321,8 @@ const response = await client.request<Result>({
 
 `request()` handles retries (only for idempotent methods), auth headers, body encoding, and cache invalidation on writes. Pass `base: 'site'` to target `/wp-json/...` directly instead of `/wp-json/wp/v2/...`.
 
+> **Note:** Write payloads are plain TypeScript interfaces, not Zod schemas. The WordPress server is the source of truth for field validation; malformed payloads surface as `WordpressValidationError` from a 400 response.
+
 ---
 
 ## 7. Custom Resources
