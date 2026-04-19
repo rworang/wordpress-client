@@ -245,6 +245,14 @@ export const handlers = [
     })
   }),
 
+  // User by ID
+  http.get(`${BASE}/wp/v2/users/:id`, ({ params }) => {
+    if (params.id === '999') {
+      return HttpResponse.json({ code: 'rest_user_invalid_id', message: 'Invalid user ID.' }, { status: 404 })
+    }
+    return HttpResponse.json({ ...rawAuthor, id: Number(params.id) })
+  }),
+
   // Media by ID
   http.get(`${BASE}/wp/v2/media/:id`, ({ params }) => {
     if (params.id === '999') {
