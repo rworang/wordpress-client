@@ -56,6 +56,7 @@ import {
   type ResourceMethods,
   type SingletonResourceMethods,
 } from './resources'
+import { createCompanion, type CompanionNamespace } from './companion'
 
 /**
  * Configuration options for the WordPress client.
@@ -201,6 +202,12 @@ export class WordpressClient {
   private readonly inflight = new Map<string, Promise<unknown>>()
 
   /**
+   * Companion-plugin namespace. Methods return `null` when the companion plugin
+   * is not installed on the host (404); other errors propagate.
+   */
+  public readonly companion: CompanionNamespace
+
+  /**
    * Creates a new WordPress client.
    *
    * @throws {Error} If baseURL is not provided
@@ -226,6 +233,8 @@ export class WordpressClient {
       const authorizationHeader = encodeBasicAuth(auth.username, auth.appPassword)
       this.resolveAuthHeader = async () => authorizationHeader
     }
+
+    this.companion = createCompanion(this)
   }
 
   // ---- Posts ----
@@ -906,6 +915,10 @@ export class WordpressClient {
   /**
    * Fetch the cache version from a custom WordPress endpoint.
    * Uses the `worang/v1` namespace, not the default `wp/v2`.
+   *
+   * @deprecated Use `client.companion.cacheVersion()` instead. This method
+   * targets the legacy `/worang/v1/cache-version` path and will be removed in
+   * v0.3.0. The companion-plugin endpoint lives at `/worang-client/v1/cache-version`.
    *
    * @returns The version string, or null if the endpoint is unavailable
    */

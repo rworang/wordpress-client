@@ -29,6 +29,7 @@ export type {
 } from './types/params'
 export type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from './types/payloads'
 export type { DefineResourceConfig, ResourceMethods, SingletonResourceMethods } from './resources'
+export type { CompanionNamespace, CompanionVersion } from './companion'
 
 export type { PaginatedResponse } from './utils/pagination'
 export { fetchAll } from './utils/pagination'
