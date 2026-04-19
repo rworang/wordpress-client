@@ -37,6 +37,7 @@ import type {
   UsersQueryParams,
 } from './types/params'
 import type { AuthConfig } from './types/auth'
+import type { PostWritePayload } from './types/payloads'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -287,6 +288,62 @@ export class WordpressClient {
       options?.signal,
     )
     return toPost(response.data)
+  }
+
+  /**
+   * Create a post.
+   */
+  async createPost(payload: PostWritePayload, options?: RequestOptions): Promise<Post> {
+    const response = await this.request<RawPost>({
+      method: 'POST',
+      path: '/posts',
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPost(response.data)
+  }
+
+  /**
+   * Update an existing post.
+   */
+  async updatePost(id: number, payload: Partial<PostWritePayload>, options?: RequestOptions): Promise<Post> {
+    const response = await this.request<RawPost>({
+      method: 'POST',
+      path: `/posts/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toPost(response.data)
+  }
+
+  /**
+   * Permanently delete a post by default. Set force to false to move it to trash instead.
+   */
+  async deletePost(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Post }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawPost }>({
+      method: 'DELETE',
+      path: `/posts/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous post')
+    }
+
+    return {
+      deleted: true,
+      previous: toPost(response.data.previous),
+    }
   }
 
   // ---- Pages ----

@@ -4,6 +4,7 @@ import { server } from './server'
 import { WordpressClient } from '../src/client'
 import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
 import { fetchAll } from '../src/utils/pagination'
+import { rawPost } from './fixtures/raw'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -545,6 +546,123 @@ describe('WordpressClient', () => {
       const client = createClient({ cache: false })
       await expect(client.request({ method: 'POST', path: '/posts', body: { title: 'Retry once' } })).rejects.toThrow()
       expect(callCount).toBe(1)
+    })
+  })
+
+  describe('post write operations', () => {
+    it('creates a post and returns the normalized Post shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const post = await client.createPost({
+        title: 'Created post',
+        content: '<p>Created content</p>',
+        excerpt: '<p>Created excerpt</p>',
+        slug: 'created-post',
+      })
+
+      expect(post.id).toBe(101)
+      expect(post.title).toBe('Created post')
+      expect(post.slug).toBe('created-post')
+    })
+
+    it('updates a post and returns the updated Post shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const post = await client.updatePost(1, {
+        title: 'Updated post',
+        excerpt: '<p>Updated excerpt</p>',
+      })
+
+      expect(post.id).toBe(1)
+      expect(post.title).toBe('Updated post')
+      expect(post.excerpt).toContain('Updated excerpt')
+    })
+
+    it('deletes a post and returns the previous Post', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deletePost(1)
+
+      expect(result.deleted).toBe(true)
+      expect(result.previous.id).toBe(rawPost.id)
+      expect(result.previous.slug).toBe(rawPost.slug)
+    })
+
+    it('requires auth for createPost', async () => {
+      const client = createClient()
+      await expect(client.createPost({ title: 'Private post' })).rejects.toThrow(WordpressAuthError)
+    })
+
+    it('sends the Authorization header on post writes', async () => {
+      let authHeaderChecks = 0
+
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts`, async ({ request }) => {
+          expect(request.headers.get('Authorization')).toBeTruthy()
+          authHeaderChecks++
+          return HttpResponse.json({ ...rawPost, id: 101 })
+        }),
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts/:id`, async ({ request, params }) => {
+          expect(request.headers.get('Authorization')).toBeTruthy()
+          authHeaderChecks++
+          return HttpResponse.json({ ...rawPost, id: Number(params.id) })
+        }),
+        http.delete(`${BASE_URL}/wp-json/wp/v2/posts/:id`, ({ request }) => {
+          expect(request.headers.get('Authorization')).toBeTruthy()
+          authHeaderChecks++
+          return HttpResponse.json({ deleted: true, previous: rawPost })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.createPost({ title: 'Header check' })
+      await client.updatePost(1, { title: 'Header check updated' })
+      await client.deletePost(1)
+
+      expect(authHeaderChecks).toBe(3)
+    })
+
+    it('invalidates cached posts after createPost', async () => {
+      let listCalls = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          listCalls++
+          return HttpResponse.json([rawPost], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.posts()
+      await client.createPost({ title: 'Invalidate cache' })
+      await client.posts()
+
+      expect(listCalls).toBe(2)
     })
   })
 
