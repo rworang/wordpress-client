@@ -26,7 +26,6 @@ dist/
 coverage
 
 # old
-docs
 .claude/
 # .sprints/
 .mcp.json
