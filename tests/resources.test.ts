@@ -87,6 +87,34 @@ describe('defineResource', () => {
       expect(deleted.previous.name).toBe('Renamed')
     })
 
+    it('soft-deletes with force:false and returns the trashed item', async () => {
+      const item: Widget = { id: 7, name: 'Soft target' }
+
+      server.use(
+        http.delete(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets/:id`, ({ request, params }) => {
+          const force = new URL(request.url).searchParams.get('force')
+          if (force === 'false') {
+            return HttpResponse.json({ ...item, id: Number(params.id) })
+          }
+          return HttpResponse.json({ deleted: true, previous: item })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+      const widgets = client.defineResource<Widget, WidgetPayload>({ path: '/worang/v1/widgets' })
+
+      const result = await widgets.delete(7, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(7)
+      expect(result.trashed.name).toBe('Soft target')
+    })
+
     it('get(slug) resolves via ?slug= query', async () => {
       server.use(
         http.get(`${BASE_URL}/wp-json/wp/v2/worang/v1/widgets`, ({ request }) => {

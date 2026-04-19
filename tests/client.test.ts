@@ -613,6 +613,21 @@ describe('WordpressClient', () => {
       expect(result.previous.slug).toBe(rawPost.slug)
     })
 
+    it('soft-deletes a post with force:false and returns the trashed Post', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deletePost(1, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(1)
+      expect(result.trashed.slug).toBe(rawPost.slug)
+    })
+
     it('requires auth for createPost', async () => {
       const client = createClient()
       await expect(client.createPost({ title: 'Private post' })).rejects.toThrow(WordpressAuthError)
@@ -732,6 +747,21 @@ describe('WordpressClient', () => {
       expect(result.previous.slug).toBe(rawPage.slug)
     })
 
+    it('soft-deletes a page with force:false and returns the trashed Page', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deletePage(2, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(2)
+      expect(result.trashed.slug).toBe(rawPage.slug)
+    })
+
     it('invalidates cached pages after createPage', async () => {
       let listCalls = 0
 
@@ -806,6 +836,22 @@ describe('WordpressClient', () => {
       expect(result.previous.slug).toBe(rawCategory.slug)
     })
 
+    it('soft-deletes a category with force:false and returns the trashed Category', async () => {
+      // Note: real WordPress does not support force:false on terms (server returns 400).
+      // This test exercises the client's response-shape handling, not WP semantics.
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteCategory(5, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(5)
+    })
+
     it('creates a tag and returns the normalized Tag shape', async () => {
       const client = new WordpressClient({
         baseURL: BASE_URL,
@@ -846,6 +892,21 @@ describe('WordpressClient', () => {
       if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawTag.id)
       expect(result.previous.slug).toBe(rawTag.slug)
+    })
+
+    it('soft-deletes a tag with force:false and returns the trashed Tag', async () => {
+      // See deleteCategory force:false note — same caveat on term semantics.
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteTag(8, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(8)
     })
 
     it('requires auth for createPage, createCategory, and createTag', async () => {
@@ -955,6 +1016,20 @@ describe('WordpressClient', () => {
       expect(result.deleted).toBe(true)
       if (!result.deleted) throw new Error('expected hard delete')
       expect(result.previous.id).toBe(rawMedia.id)
+    })
+
+    it('soft-deletes media with force:false and returns the trashed Media', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteMedia(10, { force: false })
+
+      expect(result.deleted).toBe(false)
+      if (result.deleted) throw new Error('expected soft delete')
+      expect(result.trashed.id).toBe(10)
     })
 
     it('uploads a Blob with the correct Content-Type and Content-Disposition headers', async () => {

@@ -71,8 +71,12 @@ export const handlers = [
     })
   }),
 
-  // Delete post
-  http.delete(`${BASE}/wp/v2/posts/:id`, () => {
+  // Delete post (hard-delete by default; trash on ?force=false)
+  http.delete(`${BASE}/wp/v2/posts/:id`, ({ request, params }) => {
+    const force = new URL(request.url).searchParams.get('force')
+    if (force === 'false') {
+      return HttpResponse.json({ ...rawPost, id: Number(params.id), status: 'trash' })
+    }
     return HttpResponse.json({ deleted: true, previous: rawPost })
   }),
 
@@ -136,8 +140,12 @@ export const handlers = [
     })
   }),
 
-  // Delete page
-  http.delete(`${BASE}/wp/v2/pages/:id`, () => {
+  // Delete page (hard-delete by default; trash on ?force=false)
+  http.delete(`${BASE}/wp/v2/pages/:id`, ({ request, params }) => {
+    const force = new URL(request.url).searchParams.get('force')
+    if (force === 'false') {
+      return HttpResponse.json({ ...rawPage, id: Number(params.id), status: 'trash' })
+    }
     return HttpResponse.json({ deleted: true, previous: rawPage })
   }),
 
@@ -181,8 +189,12 @@ export const handlers = [
     })
   }),
 
-  // Delete category
-  http.delete(`${BASE}/wp/v2/categories/:id`, () => {
+  // Delete category (hard-delete by default; trash on ?force=false)
+  http.delete(`${BASE}/wp/v2/categories/:id`, ({ request, params }) => {
+    const force = new URL(request.url).searchParams.get('force')
+    if (force === 'false') {
+      return HttpResponse.json({ ...rawCategory, id: Number(params.id) })
+    }
     return HttpResponse.json({ deleted: true, previous: rawCategory })
   }),
 
@@ -226,8 +238,12 @@ export const handlers = [
     })
   }),
 
-  // Delete tag
-  http.delete(`${BASE}/wp/v2/tags/:id`, () => {
+  // Delete tag (hard-delete by default; trash on ?force=false)
+  http.delete(`${BASE}/wp/v2/tags/:id`, ({ request, params }) => {
+    const force = new URL(request.url).searchParams.get('force')
+    if (force === 'false') {
+      return HttpResponse.json({ ...rawTag, id: Number(params.id) })
+    }
     return HttpResponse.json({ deleted: true, previous: rawTag })
   }),
 
@@ -283,8 +299,12 @@ export const handlers = [
     })
   }),
 
-  // Delete media
-  http.delete(`${BASE}/wp/v2/media/:id`, () => {
+  // Delete media (hard-delete by default; trash on ?force=false)
+  http.delete(`${BASE}/wp/v2/media/:id`, ({ request, params }) => {
+    const force = new URL(request.url).searchParams.get('force')
+    if (force === 'false') {
+      return HttpResponse.json({ ...rawMedia, id: Number(params.id) })
+    }
     return HttpResponse.json({ deleted: true, previous: rawMedia })
   }),
 
