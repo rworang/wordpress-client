@@ -52,7 +52,14 @@ import { toTag } from './adapters/tag'
 import { toMenuItem, toNavigationMenu } from './adapters/navigation'
 import { toAuthor } from './adapters/author'
 import { extractPagination, type PaginatedResponse } from './utils/pagination'
-import { WordpressError, WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from './errors'
+import {
+  WordpressError,
+  WordpressNotFoundError,
+  WordpressAuthError,
+  WordpressValidationError,
+  WordpressConflictError,
+  WordpressRateLimitError,
+} from './errors'
 import { dedup } from './utils/dedup'
 import { TTLCache, type CacheOptions } from './utils/cache'
 import { fetchWithRetry, type HttpResponse } from './utils/http'
@@ -1115,6 +1122,14 @@ export class WordpressClient {
       const params = data?.data?.params
       const details = params ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, [v]])) : undefined
       throw new WordpressValidationError(message, details)
+    }
+    if (status === 409) {
+      throw new WordpressConflictError(message, data?.code)
+    }
+    if (status === 429) {
+      const retryAfterHeader = response.headers.get('Retry-After')
+      const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : undefined
+      throw new WordpressRateLimitError(message, Number.isFinite(retryAfter) ? retryAfter : undefined)
     }
     throw new WordpressError(message, status, data?.code)
   }
