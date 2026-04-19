@@ -87,6 +87,29 @@ export class WordpressValidationError extends WordpressError {
 }
 
 /**
+ * Thrown when the API reports a conflict (409), such as a duplicate slug.
+ */
+export class WordpressConflictError extends WordpressError {
+  constructor(message: string, code?: string) {
+    super(message, 409, code)
+    this.name = 'WordpressConflictError'
+  }
+}
+
+/**
+ * Thrown when the API rate-limits requests (429).
+ */
+export class WordpressRateLimitError extends WordpressError {
+  constructor(
+    message: string,
+    public readonly retryAfter?: number,
+  ) {
+    super(message, 429, 'rate_limited')
+    this.name = 'WordpressRateLimitError'
+  }
+}
+
+/**
  * Thrown when an API response doesn't match the expected schema.
  *
  * The `issues` property contains field-level validation errors from Zod.

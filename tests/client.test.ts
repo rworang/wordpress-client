@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from './server'
 import { WordpressClient } from '../src/client'
-import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
+import {
+  WordpressNotFoundError,
+  WordpressAuthError,
+  WordpressValidationError,
+  WordpressConflictError,
+  WordpressRateLimitError,
+} from '../src/errors'
 import { fetchAll } from '../src/utils/pagination'
 import { rawPost, rawPage, rawCategory, rawTag, rawMedia } from './fixtures/raw'
 
@@ -1262,6 +1268,74 @@ describe('WordpressClient', () => {
           per_page: ['per_page must be between 1 and 100.'],
         })
       }
+    })
+
+    it('throws WordpressConflictError for 409 responses', async () => {
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            {
+              code: 'rest_post_conflict',
+              message: 'A post with this slug already exists.',
+            },
+            { status: 409 },
+          )
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const error = await client.createPost({ title: 'Conflict' }).catch((e) => e)
+      expect(error).toBeInstanceOf(WordpressConflictError)
+      expect(error.message).toBe('A post with this slug already exists.')
+      expect(error.statusCode).toBe(409)
+    })
+
+    it('throws WordpressRateLimitError with retryAfter when Retry-After is present', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            {
+              code: 'rest_rate_limited',
+              message: 'Too many requests.',
+            },
+            {
+              status: 429,
+              headers: { 'Retry-After': '120' },
+            },
+          )
+        }),
+      )
+
+      const client = createClient()
+      const error = await client.posts().catch((e) => e)
+      expect(error).toBeInstanceOf(WordpressRateLimitError)
+      expect(error.retryAfter).toBe(120)
+      expect(error.statusCode).toBe(429)
+    })
+
+    it('throws WordpressRateLimitError with undefined retryAfter when header is absent', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/posts`, () => {
+          return HttpResponse.json(
+            {
+              code: 'rest_rate_limited',
+              message: 'Too many requests.',
+            },
+            { status: 429 },
+          )
+        }),
+      )
+
+      const client = createClient()
+      const error = await client.posts().catch((e) => e)
+      expect(error).toBeInstanceOf(WordpressRateLimitError)
+      expect(error.retryAfter).toBeUndefined()
+      expect(error.statusCode).toBe(429)
     })
   })
 

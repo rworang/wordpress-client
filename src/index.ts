@@ -47,5 +47,7 @@ export {
   WordpressNotFoundError,
   WordpressAuthError,
   WordpressValidationError,
+  WordpressConflictError,
+  WordpressRateLimitError,
   WordpressSchemaError,
 } from './errors'
