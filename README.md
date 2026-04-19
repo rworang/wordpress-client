@@ -1,22 +1,26 @@
 # @worang/wordpress-client
 
-A typed, read-only WordPress REST API client for TypeScript and JavaScript. Designed for consuming and displaying WordPress content with runtime validation, automatic retries, caching, and request deduplication.
+A typed WordPress REST API client for TypeScript and JavaScript. Designed for consuming, authoring, and managing WordPress content with runtime validation, automatic retries, caching, and request deduplication.
 
-**This client is intentionally read-only.** It does not support authentication, write operations, or content management. It is built for front-end applications, static site generators, and any context where you need to _display_ WordPress content reliably.
+As of v0.2.0 the client supports reads, writes, media uploads, and auth — while preserving graceful-degradation defaults (no `auth` option = read-only behavior; failures never leak WordPress-shaped errors).
 
 ## Table of Contents
 
 1. [Installation & Requirements](#1-installation--requirements)
 2. [Quick Start](#2-quick-start)
 3. [Configuration](#3-configuration)
-4. [Core Concepts](#4-core-concepts)
-5. [API Reference](#5-api-reference)
-6. [Query Parameters](#6-query-parameters)
-7. [Error Handling](#7-error-handling)
-8. [Pagination](#8-pagination)
-9. [Custom Endpoints](#9-custom-endpoints)
-10. [Limitations](#10-limitations)
-11. [Version Notes](#11-version-notes)
+4. [Authentication](#4-authentication)
+5. [Core Concepts](#5-core-concepts)
+6. [Writing Content](#6-writing-content)
+7. [Custom Resources](#7-custom-resources)
+8. [Companion Plugin](#8-companion-plugin)
+9. [API Reference](#9-api-reference)
+10. [Query Parameters](#10-query-parameters)
+11. [Error Handling](#11-error-handling)
+12. [Pagination](#12-pagination)
+13. [Custom Endpoints](#13-custom-endpoints)
+14. [Limitations](#14-limitations)
+15. [Version Notes](#15-version-notes)
 
 ---
 
@@ -122,6 +126,9 @@ interface WordpressClientOptions {
 
   /** Response cache configuration. Set to false to disable caching entirely. */
   cache?: CacheOptions | false
+
+  /** Auth configuration — enables write operations. Omit for read-only access. */
+  auth?: AuthConfig
 }
 
 interface CacheOptions {
@@ -135,10 +142,10 @@ interface CacheOptions {
 
 ### Base URL handling
 
-The trailing slash is stripped automatically. The client constructs two internal axios instances:
+The trailing slash is stripped automatically. Internally the client maintains two base URLs:
 
-- **`http`** — for standard WP REST API requests at `{baseURL}/wp-json/{namespace}` (e.g., `/wp-json/wp/v2/posts`)
-- **`siteHttp`** — for custom endpoints at `{baseURL}/wp-json` (used by `cacheVersion()`)
+- **API base** — `{baseURL}/wp-json/{namespace}` (e.g., `/wp-json/wp/v2/posts`). Most methods use this.
+- **Site base** — `{baseURL}/wp-json`, for non-namespaced endpoints like the companion plugin routes. Reachable from `client.request({ ..., base: 'site' })` or `client.defineResource({ base: 'site', ... })`.
 
 ### Cache configuration
 
@@ -151,9 +158,11 @@ The trailing slash is stripped automatically. The client constructs two internal
 
 ### Retry behavior
 
-Retries use **exponential backoff** via `axios-retry`. The following conditions trigger a retry:
+Retries use exponential backoff on **idempotent methods only** (GET/HEAD/OPTIONS and explicitly-marked idempotent writes). Non-idempotent writes (POST/PUT/PATCH/DELETE) are never retried — a dropped request near a write boundary can produce duplicates.
 
-- Network errors (connection reset, DNS failure, etc.)
+The following conditions trigger a retry on idempotent methods:
+
+- Network errors (connection reset, DNS failure, abort)
 - HTTP 408 (Request Timeout)
 - HTTP 429 (Too Many Requests)
 - HTTP 5xx (Server Error)
@@ -164,11 +173,45 @@ Retries use **exponential backoff** via `axios-retry`. The following conditions 
 
 ---
 
-## 4. Core Concepts
+## 4. Authentication
 
-### Read-only design
+v0.2.0 adds optional write support via WordPress [Application Passwords](https://wordpress.org/documentation/article/application-passwords/). Every endpoint that writes, uploads, deletes, or updates requires credentials; reads remain public.
 
-This client only supports `GET` requests. There are no methods for creating, updating, or deleting content. Authentication headers are never sent. This is a deliberate constraint, not an omission — the client is purpose-built for content consumption.
+### Static credentials
+
+```typescript
+const client = new WordpressClient({
+  baseURL: 'https://myblog.com',
+  auth: { username: 'alice', appPassword: 'xxxx xxxx xxxx xxxx xxxx xxxx' },
+})
+```
+
+### Dynamic resolver (SPA session storage, token refresh, etc.)
+
+```typescript
+const client = new WordpressClient({
+  baseURL: 'https://myblog.com',
+  auth: {
+    getAuthHeader: () => sessionStore.value.authHeader,
+  },
+})
+```
+
+The resolver is invoked on every request that needs auth. Return `null` to skip sending a header (the client then behaves as if unauthenticated for that call).
+
+### Auth rules
+
+- Read methods (`posts`, `pages`, `category`, …) work without `auth`.
+- Write methods (create / update / delete / upload) throw `WordpressAuthError` when no credentials are available.
+- Credentials are sent as `Authorization: Basic <base64(user:appPassword)>`. The encoder picks `btoa` in browsers and `Buffer.from` in Node.
+
+---
+
+## 5. Core Concepts
+
+### Reads-first, writes on opt-in
+
+Without `auth`, the client only makes `GET` requests. Once `auth` is configured, create / update / delete / upload become available and automatically invalidate the relevant cache prefixes (e.g. creating a post busts `/posts`, creating a tag busts both `/tags` and `/posts` because post embeds include term data).
 
 ### Why raw WordPress types are not exposed
 
@@ -204,11 +247,168 @@ Call `client.clearCache()` to manually invalidate all entries.
 
 ### Error model
 
-All errors extend `WordpressError`, which itself extends the built-in `Error`. Use `instanceof` checks for granular handling. See [Error Handling](#7-error-handling) for details.
+All errors extend `WordpressError`, which itself extends the built-in `Error`. Use `instanceof` checks for granular handling. See [Error Handling](#11-error-handling) for details.
 
 ---
 
-## 5. API Reference
+## 6. Writing Content
+
+All write methods require `auth` to be configured on the client. Each mutation automatically invalidates the matching cache prefix.
+
+### Posts
+
+```typescript
+const created = await client.createPost({ title: 'Hello', status: 'publish', content: 'Body' })
+const updated = await client.updatePost(created.id, { status: 'draft' })
+await client.deletePost(updated.id) // default force: true (skip trash)
+```
+
+### Pages
+
+```typescript
+const about = await client.createPage({ title: 'About', status: 'publish', content: 'About us' })
+await client.updatePage(about.id, { menu_order: 2, parent: 0 })
+await client.deletePage(about.id)
+```
+
+### Categories & tags
+
+```typescript
+const cat = await client.createCategory({ name: 'News', slug: 'news' })
+await client.updateCategory(cat.id, { description: 'Site news' })
+await client.deleteCategory(cat.id)
+
+const tag = await client.createTag({ name: 'javascript' })
+await client.updateTag(tag.id, { description: 'JS posts' })
+await client.deleteTag(tag.id)
+```
+
+Category and tag writes invalidate both `/tags`|`/categories` **and** `/posts`, because post embeds include term data.
+
+### Media
+
+```typescript
+// Metadata update (no binary)
+await client.updateMedia(mediaId, { alt_text: 'Sunset over the bay' })
+
+// Delete (force-delete by default — use { force: false } to send to trash)
+await client.deleteMedia(mediaId)
+
+// Upload a binary file (Blob or File)
+const blob = new Blob([bytes], { type: 'image/jpeg' })
+const media = await client.uploadMedia(blob, {
+  filename: 'sunset.jpg',
+  altText: 'Sunset over the bay',
+  caption: 'Summer 2025',
+})
+```
+
+`uploadMedia` sends the binary body with `Content-Type` preserved from the blob and `Content-Disposition: attachment; filename="..."`. If any of `altText` / `caption` / `title` are supplied, a follow-up `POST /media/:id` is issued to set the metadata — an upload with metadata is two round-trips.
+
+### Custom writes via `request()`
+
+For endpoints not covered by a built-in method, drop down to the low-level public API:
+
+```typescript
+const response = await client.request<Result>({
+  method: 'POST',
+  path: '/my/v1/feedback',
+  body: { subject, message },
+  requireAuth: true,
+  base: 'site', // or 'api' (default)
+})
+```
+
+`request()` handles retries (only for idempotent methods), auth headers, body encoding, and cache invalidation on writes. Pass `base: 'site'` to target `/wp-json/...` directly instead of `/wp-json/wp/v2/...`.
+
+---
+
+## 7. Custom Resources
+
+`client.defineResource` wraps any REST endpoint as a typed resource with CRUD semantics. Use it for custom post types, plugin-provided endpoints, or anywhere the built-ins don't fit.
+
+### CRUD resource
+
+```typescript
+interface Review {
+  id: number
+  title: string
+  rating: number
+}
+interface ReviewPayload {
+  title: string
+  rating: number
+}
+
+const reviews = client.defineResource<Review, ReviewPayload>({
+  path: '/worang/v1/reviews',
+  invalidates: ['/worang/v1/reviews'], // optional extra prefixes busted after writes
+})
+
+const { data: recent } = await reviews.list({ per_page: 20 })
+const one = await reviews.get(42) // by id
+const bySlug = await reviews.get('best-review') // ?slug=...
+const created = await reviews.create({ title: 'Great', rating: 5 })
+const updated = await reviews.update(created.id, { rating: 4 })
+await reviews.delete(created.id)
+```
+
+### Singleton resource
+
+```typescript
+interface SiteConfig {
+  title: string
+  tagline: string
+}
+interface SiteConfigPayload {
+  title: string
+  tagline?: string
+}
+
+const siteConfig = client.defineResource<SiteConfig, SiteConfigPayload>({
+  path: '/worang/v1/site-config',
+  singleton: true, // overload narrows the return type to { get, update }
+})
+
+const current = await siteConfig.get()
+await siteConfig.update({ title: 'New Title' })
+```
+
+When `singleton: true` is set, the return type exposes only `get` and `update` — calling `.list()` or `.create()` is a TypeScript error.
+
+### Options
+
+| Field         | Type               | Description                                                                                     |
+| ------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
+| `path`        | `string`           | REST path without namespace prefix, e.g. `/worang/v1/reviews`                                   |
+| `base`        | `'api' \| 'site'`  | `'api'` (default) resolves under `/wp-json/wp/v2`; `'site'` resolves under `/wp-json` directly  |
+| `itemSchema`  | `z.ZodType<unknown>` | Optional Zod schema — runs `safeParse` and throws `WordpressSchemaError` on a mismatch        |
+| `invalidates` | `string[]`         | Extra cache prefixes to invalidate after writes (on top of the auto-invalidation of `path`)     |
+| `singleton`   | `boolean`          | When `true`, returns `{ get, update }` only                                                     |
+
+---
+
+## 8. Companion Plugin
+
+The companion plugin is an **opt-in** WordPress plugin that extends what the SDK can do — currently just exposing a cache-busting token. When the plugin is absent, every `client.companion.*` method returns `null` gracefully.
+
+```typescript
+const info = await client.companion.version()
+if (info?.features.includes('cache-version')) {
+  const token = await client.companion.cacheVersion()
+  // fold `token` into SWR / TanStack Query keys, service worker caches, etc.
+}
+```
+
+- `client.companion.version()` → `{ version, features } | null` (404 → `null`)
+- `client.companion.cacheVersion()` → `string | null`
+- Any non-404 error (network failure, 5xx) is rethrown — "plugin absent" and "plugin broken" are different signals.
+
+See [`docs/companion-plugin.md`](docs/companion-plugin.md) for the full contract and a reference PHP stub.
+
+---
+
+## 9. API Reference
 
 ### `posts(params?)`
 
@@ -407,6 +607,18 @@ const author = await client.user('jane-doe')
 
 ---
 
+### `userById(id)`
+
+Fetch a single user by their numeric ID.
+
+```typescript
+async userById(id: number, options?: RequestOptions): Promise<Author>
+```
+
+**Error cases:** Throws `WordpressNotFoundError` if the user does not exist. Throws `WordpressAuthError` if the host restricts user listings.
+
+---
+
 ### `menus(params?)`
 
 Fetch a paginated list of navigation menus.
@@ -476,15 +688,55 @@ const { data: images } = await client.mediaList({
 
 ---
 
-### `cacheVersion()`
+### Writing content (requires `auth`)
 
-Fetch the cache version from the `worang/v1/cache-version` custom endpoint (registered by the Worang Dev Tools plugin).
+The following methods write to the WordPress REST API. All of them throw `WordpressAuthError` when `auth` is not configured. See [Writing Content](#6-writing-content) for worked examples.
+
+| Method                                                                                                    | Returns                               | Notes                                                        |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
+| `createPost(payload)`                                                                                     | `Post`                                | Invalidates `/posts`                                         |
+| `updatePost(id, payload)`                                                                                 | `Post`                                | Invalidates `/posts`                                         |
+| `deletePost(id, { force? })`                                                                              | `{ deleted: true; previous: Post }`   | `force: true` by default (skip trash)                        |
+| `createPage(payload)`                                                                                     | `Page`                                | Invalidates `/pages`                                         |
+| `updatePage(id, payload)`                                                                                 | `Page`                                | Invalidates `/pages`                                         |
+| `deletePage(id, { force? })`                                                                              | `{ deleted: true; previous: Page }`   | Same as posts                                                |
+| `createCategory(payload)`                                                                                 | `Category`                            | Invalidates `/categories` **and** `/posts`                   |
+| `updateCategory(id, payload)`                                                                             | `Category`                            | Same invalidation                                            |
+| `deleteCategory(id, { force? })`                                                                          | `{ deleted: true; previous: Category }` | Same                                                         |
+| `createTag(payload)`                                                                                      | `Tag`                                 | Invalidates `/tags` **and** `/posts`                         |
+| `updateTag(id, payload)`                                                                                  | `Tag`                                 | Same                                                         |
+| `deleteTag(id, { force? })`                                                                               | `{ deleted: true; previous: Tag }`    | Same                                                         |
+| `updateMedia(id, payload)`                                                                                | `Media`                               | Metadata-only                                                |
+| `deleteMedia(id, { force? })`                                                                             | `{ deleted: true; previous: Media }`  | Invalidates `/media`                                         |
+| `uploadMedia(file, { filename?, altText?, caption?, title? })`                                            | `Media`                               | Two HTTP round-trips when any metadata option is supplied    |
+
+### `defineResource(config)`
+
+Factory for wrapping arbitrary REST endpoints as typed resources. See [Custom Resources](#7-custom-resources).
+
+```typescript
+defineResource<Item, Payload>(config: DefineResourceConfig<Payload>): ResourceMethods<Item, Payload> | SingletonResourceMethods<Item, Payload>
+```
+
+### `companion.version()` / `companion.cacheVersion()`
+
+Optional companion-plugin namespace with null-on-404 semantics. See [Companion Plugin](#8-companion-plugin).
+
+### `request<T>(config)`
+
+Low-level escape hatch for endpoints the built-ins don't cover. Handles retries, auth, body encoding, and cache invalidation.
+
+### `invalidate(pattern)`
+
+Invalidate cached entries by string prefix, `RegExp`, or predicate. Returns the number of keys cleared.
+
+### `cacheVersion()` — **deprecated**
+
+> Deprecated in v0.2.0. Use [`client.companion.cacheVersion()`](#8-companion-plugin) instead. The legacy method continues to hit the old `/worang/v1/cache-version` path and will be removed in v0.3.0.
 
 ```typescript
 async cacheVersion(): Promise<string | null>
 ```
-
-Returns the version string, or `null` if the endpoint is unavailable. See [Custom Endpoints](#9-custom-endpoints).
 
 ---
 
@@ -502,7 +754,7 @@ client.clearCache()
 
 ---
 
-## 6. Query Parameters
+## 10. Query Parameters
 
 ### `PostQueryParams`
 
@@ -596,7 +848,7 @@ client.clearCache()
 
 ---
 
-## 7. Error Handling
+## 11. Error Handling
 
 All errors extend `WordpressError`. Use `instanceof` for granular handling.
 
@@ -705,7 +957,7 @@ try {
 
 ---
 
-## 8. Pagination
+## 12. Pagination
 
 All list methods (`posts()`, `categories()`, `mediaList()`) return a `PaginatedResponse<T>`:
 
@@ -764,83 +1016,80 @@ console.log(allPosts.length) // total count across all pages
 
 ---
 
-## 9. Custom Endpoints
+## 13. Custom Endpoints
 
-### `cacheVersion()` — optional integration
+### `fetchCustom()` — read-only custom namespaces
 
-Fetches a cache version string from the `worang/v1/cache-version` custom endpoint. This endpoint is **not part of the WordPress REST API** — it is registered by the **Worang Dev Tools** plugin.
+For read-only GETs against custom REST namespaces, `fetchCustom<T>(endpoint, params?)` returns a `PaginatedResponse<T>` without adapter normalization — the response payload is typed as `T` directly.
 
 ```typescript
-const version = await client.cacheVersion()
-// "1709312400" or null if endpoint is unavailable
+const { data } = await client.fetchCustom<{ id: number; title: string }>('/my/v1/articles', {
+  per_page: 10,
+})
 ```
 
-**How it works on the backend:** The plugin hooks into `save_post` to update a timestamp in `wp_options` whenever any post is saved. The REST route returns that timestamp:
+### Write or mutate: use `request()` or `defineResource()`
 
-```php
-add_action('save_post', function($post_id) {
-    if (wp_is_post_revision($post_id)) return;
-    update_option('worang_cache_version', time());
-});
+For anything beyond a read, drop to `client.request({...})` (see [Writing Content](#6-writing-content)) or wrap the endpoint as a typed resource with `client.defineResource({ path, ... })` (see [Custom Resources](#7-custom-resources)).
 
-add_action('rest_api_init', function() {
-    register_rest_route('worang/v1', '/cache-version', [
-        'methods'  => 'GET',
-        'callback' => fn() => ['version' => get_option('worang_cache_version', 0)],
-        'permission_callback' => '__return_true',
-    ]);
-});
-```
+### Companion plugin
 
-**Use case:** Cache invalidation. Compare the returned version against a previously stored value to decide whether to refresh cached content. The version changes whenever a post is created, updated, or deleted.
+See [§8 Companion Plugin](#8-companion-plugin) for the opt-in `worang-client/v1/*` namespace with null-on-404 fallback.
 
-**Graceful degradation:** If the plugin is not installed or the endpoint is unreachable, `cacheVersion()` returns `null`. It never throws. This makes it safe to use unconditionally — sites without the plugin simply skip cache-busting logic.
+### Legacy: `cacheVersion()` — **deprecated**
 
-**Note:** The method uses the `siteHttp` axios instance (base path `/wp-json`) rather than the namespace-scoped instance, since it targets the `worang/v1` namespace instead of the default `wp/v2`.
+The legacy `cacheVersion()` method (targeting `/worang/v1/cache-version`) still works but is deprecated in favor of `client.companion.cacheVersion()` (targeting `/worang-client/v1/cache-version`). The legacy method is scheduled for removal in v0.3.0.
 
 ---
 
-## 10. Limitations
+## 14. Limitations
 
 ### Unsupported endpoints
 
-The following WordPress REST API surfaces are still **not** supported directly:
+- **Comments** — no comment retrieval or posting helpers.
+- **WooCommerce** — no support for products, orders, or other WooCommerce endpoints.
+- **Revisions / autosaves** — `updatePost`/`updatePage` write directly to the current record; revisions history is not exposed.
+- **Multisite-aware routing** — a single `baseURL` is assumed; switching sites requires multiple client instances.
 
-- **Comments** — no comment retrieval or posting helpers
-- **WooCommerce** — no support for products, orders, or other WooCommerce endpoints
-- **Custom write endpoints** — use `fetchCustom()` for read-only access to custom namespaces or post types
+For custom post types or plugin-provided endpoints, use `client.defineResource({ path, ... })` or `client.request({ ... })`.
 
-### No authentication
+### No built-in token refresh
 
-This client does not send authentication headers. Endpoints or post statuses that require authentication (drafts, private posts, etc.) will result in a `WordpressAuthError`.
-
-### No write operations
-
-There are no methods for creating, updating, or deleting any resource. All requests are HTTP `GET`.
+The static `{ username, appPassword }` form sends the same credentials on every request. For OAuth/JWT-style flows with rotation, use the dynamic `auth: { getAuthHeader }` form — the resolver runs on every authed call and can return a freshly-minted header.
 
 ### In-memory cache only
 
-The TTL cache is stored in-process memory. It does not persist across restarts, is not shared between instances, and is not suitable for serverless environments where instances are short-lived.
+The TTL cache lives in-process. It does not persist across restarts, is not shared between instances, and is not suitable for serverless environments where instances are short-lived.
 
-### No media uploads
+### Node ESM + `moduleResolution: bundler`
 
-The `media()` and `mediaList()` methods are read-only. There is no support for uploading files to the WordPress media library.
+The package ships ESM only with `"type": "module"`. TypeScript consumers should set `moduleResolution: bundler` (or `node16`/`nodenext`) in `tsconfig.json`. Bundlerless `node` resolution will not find the package's `exports` map correctly.
+
+### `List` methods default to `per_page = 10`
+
+Matches the WP REST default. For complete enumeration, pair with `fetchAll((page) => client.posts({ page, per_page: 100 }))`.
 
 ---
 
-## 11. Version Notes
+## 15. Version Notes
 
-The following features appear to be recent additions based on the commit history:
+### 0.2.0 — Authoring
 
-- **TTL response cache** with configurable `ttl` and `maxEntries` — enabled by default, disable with `cache: false`
-- **`clearCache()`** method for manual cache invalidation
-- **Request deduplication** — concurrent identical requests share a single HTTP call
-- **`WordpressSchemaError`** — thrown when API responses fail Zod validation
-- **`cacheVersion()`** — cache invalidation via Worang Dev Tools plugin endpoint
-- **`exclude` parameter** in `PostQueryParams` — exclude specific post IDs from results
-- **`mediaList()`** — paginated media listing
-- **Optional `description` and `count`** fields on `Category`
-- **Zod validation on `toMediaFromFeatured()`** — featured media embedded in posts is now validated
+- Application Password auth via `auth: { username, appPassword }` or `auth: { getAuthHeader }`
+- CUD on posts, pages, categories, tags, media (including binary `uploadMedia`)
+- `userById(id)` method
+- Public `client.request<T>()` + `client.invalidate(pattern)` for custom writes
+- `client.defineResource({ ... })` factory for custom resources (CRUD or singleton)
+- `client.companion` namespace with null-on-404 fallback
+- `docs/companion-plugin.md` contract spec for the optional WP plugin
+- `cacheVersion()` deprecated — use `client.companion.cacheVersion()` instead
+
+### 0.1.0
+
+- Typed read client for posts, pages, categories, tags, users, media, menus
+- Zod-validated responses + adapter-normalized domain types
+- TTL response cache, request deduplication, retry with exponential backoff
+- `fetchAll()` helper for sequential full-enumeration
 
 ---
 
@@ -924,7 +1173,15 @@ The package exports the following from its single entry point:
 ```typescript
 // Client
 import { WordpressClient, fetchAll } from '@worang/wordpress-client'
-import type { WordpressClientOptions, RequestOptions } from '@worang/wordpress-client'
+import type {
+  WordpressClientOptions,
+  RequestOptions,
+  RequestConfig,
+  RequestMethod,
+  AuthConfig,
+  AuthCredentials,
+  AuthResolver,
+} from '@worang/wordpress-client'
 
 // Domain types
 import type { Post, Page, Media, Category, Tag, MenuItem, NavigationMenu, Author } from '@worang/wordpress-client'
@@ -939,6 +1196,24 @@ import type {
   MenuQueryParams,
   UsersQueryParams,
 } from '@worang/wordpress-client'
+
+// Write payloads
+import type {
+  PostWritePayload,
+  PageWritePayload,
+  TermWritePayload,
+  MediaWritePayload,
+} from '@worang/wordpress-client'
+
+// Custom resources
+import type {
+  DefineResourceConfig,
+  ResourceMethods,
+  SingletonResourceMethods,
+} from '@worang/wordpress-client'
+
+// Companion plugin
+import type { CompanionNamespace, CompanionVersion } from '@worang/wordpress-client'
 
 // Response types
 import type { PaginatedResponse, CacheOptions } from '@worang/wordpress-client'
