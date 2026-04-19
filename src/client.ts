@@ -37,7 +37,7 @@ import type {
   UsersQueryParams,
 } from './types/params'
 import type { AuthConfig } from './types/auth'
-import type { PostWritePayload, PageWritePayload, TermWritePayload } from './types/payloads'
+import type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from './types/payloads'
 import { toPost } from './adapters/post'
 import { toPage } from './adapters/page'
 import { toMedia } from './adapters/media'
@@ -722,6 +722,101 @@ export class WordpressClient {
     )
     const paginated = extractPagination(response, page, per_page)
     return { ...paginated, data: paginated.data.map(toMedia) }
+  }
+
+  /**
+   * Update metadata on an existing media item (title, alt text, caption, description).
+   * Does not modify the binary file itself.
+   */
+  async updateMedia(id: number, payload: Partial<MediaWritePayload>, options?: RequestOptions): Promise<Media> {
+    const response = await this.request<RawMedia>({
+      method: 'POST',
+      path: `/media/${id}`,
+      body: payload,
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    return toMedia(response.data)
+  }
+
+  /**
+   * Permanently delete a media item by default. Set force to false to move it to trash instead.
+   */
+  async deleteMedia(
+    id: number,
+    options?: { force?: boolean } & RequestOptions,
+  ): Promise<{ deleted: true; previous: Media }> {
+    const force = options?.force ?? true
+    const response = await this.request<{ deleted?: boolean; previous?: RawMedia }>({
+      method: 'DELETE',
+      path: `/media/${id}`,
+      params: { force: force ? 'true' : 'false' },
+      requireAuth: true,
+      signal: options?.signal,
+    })
+
+    if (!response.data.previous) {
+      throw new WordpressError('Delete response did not include the previous media item')
+    }
+
+    return {
+      deleted: true,
+      previous: toMedia(response.data.previous),
+    }
+  }
+
+  /**
+   * Upload a binary file to the media library.
+   *
+   * When `altText`, `caption`, or `title` are provided, a follow-up `updateMedia` call
+   * is issued to attach the metadata — WordPress doesn't accept arbitrary fields on the
+   * initial binary upload. This means two HTTP round-trips when metadata is supplied.
+   *
+   * @example
+   * const media = await client.uploadMedia(file, { altText: 'Cover photo' })
+   */
+  async uploadMedia(
+    file: File | Blob,
+    options?: {
+      filename?: string
+      altText?: string
+      caption?: string
+      title?: string
+    } & RequestOptions,
+  ): Promise<Media> {
+    const filename =
+      options?.filename ?? (typeof File !== 'undefined' && file instanceof File ? file.name : undefined) ?? 'upload.bin'
+
+    const contentType = file.type || 'application/octet-stream'
+
+    const response = await this.request<RawMedia>({
+      method: 'POST',
+      path: '/media',
+      body: file,
+      requireAuth: true,
+      signal: options?.signal,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    })
+
+    let media = toMedia(response.data)
+
+    if (options?.altText !== undefined || options?.caption !== undefined || options?.title !== undefined) {
+      media = await this.updateMedia(
+        media.id,
+        {
+          alt_text: options.altText,
+          caption: options.caption,
+          title: options.title,
+        },
+        { signal: options.signal },
+      )
+    }
+
+    return media
   }
 
   // ---- Navigation ----
