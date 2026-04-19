@@ -175,7 +175,7 @@ export function createResource<Item, Payload>(
     },
     async delete(id, options) {
       const force = options?.force ?? true
-      const response = await client.request<{ deleted?: boolean; previous?: unknown } | unknown>({
+      const response = await client.request<{ deleted?: boolean; previous?: unknown }>({
         method: 'DELETE',
         path: `${path}/${id}`,
         params: { force: force ? 'true' : 'false' },

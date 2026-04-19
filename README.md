@@ -42,7 +42,7 @@ Or add to `package.json`:
 
 ### Requirements
 
-- **Node.js** 18+
+- **Node.js** 20+
 - **TypeScript** 5.4+ (if using TypeScript)
 - **ESM only** — this package ships as ES modules. Your project must use `"type": "module"` in `package.json` or import via dynamic `import()`.
 
@@ -425,7 +425,7 @@ See [`docs/companion-plugin.md`](docs/companion-plugin.md) for the full contract
 Fetch a paginated list of posts with embedded author, categories, and featured media.
 
 ```typescript
-async posts(params?: PostQueryParams): Promise<PaginatedResponse<Post>>
+async posts(params?: PostQueryParams, options?: RequestOptions): Promise<PaginatedResponse<Post>>
 ```
 
 **Defaults:** `page = 1`, `per_page = 10`
@@ -706,18 +706,18 @@ The following methods write to the WordPress REST API. All of them throw `Wordpr
 | --------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
 | `createPost(payload)`                                                                                     | `Post`                                | Invalidates `/posts`                                         |
 | `updatePost(id, payload)`                                                                                 | `Post`                                | Invalidates `/posts`                                         |
-| `deletePost(id, { force? })`                                                                              | `{ deleted: true; previous: Post }`   | `force: true` by default (skip trash)                        |
+| `deletePost(id, { force? })`                                                                              | `DeleteResult<Post>`                  | `force: true` by default; `force: false` returns `{ deleted: false; trashed: T }` |
 | `createPage(payload)`                                                                                     | `Page`                                | Invalidates `/pages`                                         |
 | `updatePage(id, payload)`                                                                                 | `Page`                                | Invalidates `/pages`                                         |
-| `deletePage(id, { force? })`                                                                              | `{ deleted: true; previous: Page }`   | Same as posts                                                |
+| `deletePage(id, { force? })`                                                                              | `DeleteResult<Page>`                  | `force: false` returns `{ deleted: false; trashed: T }`      |
 | `createCategory(payload)`                                                                                 | `Category`                            | Invalidates `/categories` **and** `/posts`                   |
 | `updateCategory(id, payload)`                                                                             | `Category`                            | Same invalidation                                            |
-| `deleteCategory(id, { force? })`                                                                          | `{ deleted: true; previous: Category }` | Same                                                         |
+| `deleteCategory(id, { force? })`                                                                          | `DeleteResult<Category>`              | `force: false` returns `{ deleted: false; trashed: T }`      |
 | `createTag(payload)`                                                                                      | `Tag`                                 | Invalidates `/tags` **and** `/posts`                         |
 | `updateTag(id, payload)`                                                                                  | `Tag`                                 | Same                                                         |
-| `deleteTag(id, { force? })`                                                                               | `{ deleted: true; previous: Tag }`    | Same                                                         |
+| `deleteTag(id, { force? })`                                                                               | `DeleteResult<Tag>`                   | `force: false` returns `{ deleted: false; trashed: T }`      |
 | `updateMedia(id, payload)`                                                                                | `Media`                               | Metadata-only                                                |
-| `deleteMedia(id, { force? })`                                                                             | `{ deleted: true; previous: Media }`  | Invalidates `/media`                                         |
+| `deleteMedia(id, { force? })`                                                                             | `DeleteResult<Media>`                 | Invalidates `/media`; `force: false` returns `{ deleted: false; trashed: T }` |
 | `uploadMedia(file, { filename?, altText?, caption?, title? })`                                            | `Media`                               | Two HTTP round-trips when any metadata option is supplied    |
 
 ### `defineResource(config)`
@@ -741,7 +741,7 @@ Low-level escape hatch for endpoints the built-ins don't cover. Handles retries,
 Read-only helper for GET requests against custom REST namespaces. Returns `PaginatedResponse<T>` with the response payload typed as `T` (no adapter normalization, no Zod validation). See [Custom Endpoints](#13-custom-endpoints).
 
 ```typescript
-async fetchCustom<T>(endpoint: string, params?: Record<string, unknown>): Promise<PaginatedResponse<T>>
+async fetchCustom<T>(endpoint: string, params?: Record<string, unknown>, options?: RequestOptions): Promise<PaginatedResponse<T>>
 ```
 
 ### `invalidate(pattern)`
