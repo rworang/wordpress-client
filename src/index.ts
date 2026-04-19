@@ -27,7 +27,7 @@ export type {
   MenuQueryParams,
   UsersQueryParams,
 } from './types/params'
-export type { PostWritePayload } from './types/payloads'
+export type { PostWritePayload, PageWritePayload, TermWritePayload } from './types/payloads'
 
 export type { PaginatedResponse } from './utils/pagination'
 export { fetchAll } from './utils/pagination'
