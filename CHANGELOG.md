@@ -15,6 +15,8 @@ file. This project follows [Semantic Versioning](https://semver.org/).
   response that WordPress returns for soft deletes. Methods now return a
   discriminated `DeleteResult<T>` — `{ deleted: true, previous: T }` for
   hard delete or `{ deleted: false, trashed: T }` for soft delete.
+- README API docs now correctly show the Node 20 requirement, `DeleteResult<T>` return types, and the optional `RequestOptions` params on the low-level read methods.
+- Removed dead fallbacks in the navigation and media adapters, and removed the collapsed `| unknown` union in the generic resource delete path.
 - `defineResource` README and JSDoc examples now show `base: 'site'` for
   plugin-registered namespaces — the previous examples silently targeted
   `/wp-json/wp/v2/worang/v1/...`, which is not where a plugin endpoint
@@ -22,14 +24,19 @@ file. This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- CI now runs the full quality gate on pushes to `dev` and `main`, plus pull requests targeting either branch, while the `dist/` commit step remains restricted to pushes on `main`.
 - Minimum Node version raised to **Node 20**. Node 18 is EOL; this also
   unblocks `@vitest/coverage-v8@4.x` which relies on
   `node:inspector/promises` (Node 19+).
+- Low-level HTTP helper coverage increased to 94.8% statements, strengthening the retry, timeout, abort, and response parsing safety net.
 
 ### Added
 
 - `DeleteResult<T>` discriminated-union type exported from the package
   root for typing delete responses.
+- `WordpressConflictError` for 409 conflict responses.
+- `WordpressRateLimitError` for 429 rate-limited responses, including parsed `retryAfter` seconds when available.
+- `companion-plugin/worang-client-companion.php` v1.0.0 with public `worang-client/v1/version` and `worang-client/v1/cache-version` endpoints plus a portable zip build script.
 
 ## 0.2.0 — 2026-04-19 (Authoring)
 
