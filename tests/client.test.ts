@@ -1297,4 +1297,65 @@ describe('WordpressClient', () => {
       expect(version).toBeNull()
     })
   })
+
+  describe('companion namespace', () => {
+    it('companion.version() returns the version + features on 200', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang-client/v1/version`, () => {
+          return HttpResponse.json({ version: '1.2.3', features: ['cache-version'] })
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.companion.version()
+      expect(result).toEqual({ version: '1.2.3', features: ['cache-version'] })
+    })
+
+    it('companion.cacheVersion() returns the version string on 200', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang-client/v1/cache-version`, () => {
+          return HttpResponse.json({ version: 'deploy-42' })
+        }),
+      )
+
+      const client = createClient()
+      const version = await client.companion.cacheVersion()
+      expect(version).toBe('deploy-42')
+    })
+
+    it('companion.version() returns null on 404 (plugin absent)', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang-client/v1/version`, () => {
+          return HttpResponse.json({ code: 'rest_no_route' }, { status: 404 })
+        }),
+      )
+
+      const client = createClient()
+      const result = await client.companion.version()
+      expect(result).toBeNull()
+    })
+
+    it('companion.cacheVersion() returns null on 404 (plugin absent)', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang-client/v1/cache-version`, () => {
+          return HttpResponse.json({ code: 'rest_no_route' }, { status: 404 })
+        }),
+      )
+
+      const client = createClient()
+      const version = await client.companion.cacheVersion()
+      expect(version).toBeNull()
+    })
+
+    it('companion.version() rethrows on 500 (plugin broken, not absent)', async () => {
+      server.use(
+        http.get(`${BASE_URL}/wp-json/worang-client/v1/version`, () => {
+          return HttpResponse.json({ message: 'boom' }, { status: 500 })
+        }),
+      )
+
+      const client = createClient()
+      await expect(client.companion.version()).rejects.toThrow()
+    })
+  })
 })
