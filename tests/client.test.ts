@@ -4,7 +4,7 @@ import { server } from './server'
 import { WordpressClient } from '../src/client'
 import { WordpressNotFoundError, WordpressAuthError, WordpressValidationError } from '../src/errors'
 import { fetchAll } from '../src/utils/pagination'
-import { rawPost, rawPage, rawCategory, rawTag } from './fixtures/raw'
+import { rawPost, rawPage, rawCategory, rawTag, rawMedia } from './fixtures/raw'
 
 const BASE_URL = 'https://test.wp.com'
 
@@ -910,6 +910,152 @@ describe('WordpressClient', () => {
 
       expect(postCount).toBe(2)
       expect(tagCount).toBe(2)
+    })
+  })
+
+  describe('media write operations', () => {
+    it('updates media metadata and returns the normalized Media shape', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const media = await client.updateMedia(10, { alt_text: 'Updated alt text' })
+
+      expect(media.id).toBe(10)
+      expect(media.alt).toBe('Updated alt text')
+    })
+
+    it('deletes media and returns the previous Media', async () => {
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const result = await client.deleteMedia(10)
+
+      expect(result.deleted).toBe(true)
+      expect(result.previous.id).toBe(rawMedia.id)
+    })
+
+    it('uploads a Blob with the correct Content-Type and Content-Disposition headers', async () => {
+      let receivedContentType: string | null = null
+      let receivedDisposition: string | null = null
+      let receivedBody: ArrayBuffer | null = null
+
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/media`, async ({ request }) => {
+          receivedContentType = request.headers.get('Content-Type')
+          receivedDisposition = request.headers.get('Content-Disposition')
+          receivedBody = await request.arrayBuffer()
+          return HttpResponse.json({ ...rawMedia, id: 505 })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const bytes = new Uint8Array([1, 2, 3, 4])
+      const blob = new Blob([bytes], { type: 'image/png' })
+      const media = await client.uploadMedia(blob, { filename: 'pixel.png' })
+
+      expect(media.id).toBe(505)
+      expect(receivedContentType).toBe('image/png')
+      expect(receivedDisposition).toBe('attachment; filename="pixel.png"')
+      expect(new Uint8Array(receivedBody!)).toEqual(bytes)
+    })
+
+    it('issues a follow-up updateMedia call when metadata is supplied', async () => {
+      let uploadCalls = 0
+      let updateCalls = 0
+
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/media`, () => {
+          uploadCalls++
+          return HttpResponse.json({ ...rawMedia, id: 505 })
+        }),
+        http.post(`${BASE_URL}/wp-json/wp/v2/media/:id`, async ({ request, params }) => {
+          updateCalls++
+          const body = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({
+            ...rawMedia,
+            id: Number(params.id),
+            alt_text: typeof body.alt_text === 'string' ? body.alt_text : rawMedia.alt_text,
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const blob = new Blob([new Uint8Array([1])], { type: 'image/png' })
+      const media = await client.uploadMedia(blob, { filename: 'alt.png', altText: 'alt text' })
+
+      expect(uploadCalls).toBe(1)
+      expect(updateCalls).toBe(1)
+      expect(media.alt).toBe('alt text')
+    })
+
+    it('requires auth for uploadMedia', async () => {
+      const client = createClient()
+      const blob = new Blob([new Uint8Array([1])], { type: 'image/png' })
+      await expect(client.uploadMedia(blob)).rejects.toThrow(WordpressAuthError)
+    })
+
+    it('does not retry a 500 on upload (non-idempotent)', async () => {
+      let callCount = 0
+
+      server.use(
+        http.post(`${BASE_URL}/wp-json/wp/v2/media`, () => {
+          callCount++
+          return HttpResponse.json({ message: 'Server error' }, { status: 500 })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 3 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      const blob = new Blob([new Uint8Array([1])], { type: 'image/png' })
+      await expect(client.uploadMedia(blob, { filename: 'fail.png' })).rejects.toThrow()
+      expect(callCount).toBe(1)
+    })
+
+    it('invalidates cached mediaList after uploadMedia', async () => {
+      let listCalls = 0
+
+      server.use(
+        http.get(`${BASE_URL}/wp-json/wp/v2/media`, () => {
+          listCalls++
+          return HttpResponse.json([rawMedia], {
+            headers: { 'x-wp-total': '1', 'x-wp-totalpages': '1' },
+          })
+        }),
+      )
+
+      const client = new WordpressClient({
+        baseURL: BASE_URL,
+        retry: { retries: 0 },
+        cache: { ttl: 5000 },
+        auth: { username: 'alice', appPassword: 'secret' },
+      })
+
+      await client.mediaList()
+      const blob = new Blob([new Uint8Array([1])], { type: 'image/png' })
+      await client.uploadMedia(blob, { filename: 'bust.png' })
+      await client.mediaList()
+
+      expect(listCalls).toBe(2)
     })
   })
 
