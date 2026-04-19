@@ -26,7 +26,7 @@ export const toMedia = (raw: RawMedia): Media => {
     width: raw.media_details.width,
     height: raw.media_details.height,
     sizes: Object.fromEntries(
-      Object.entries(raw.media_details.sizes ?? {}).map(([key, size]) => [
+      Object.entries(raw.media_details.sizes).map(([key, size]) => [
         key,
         {
           url: size.source_url,
