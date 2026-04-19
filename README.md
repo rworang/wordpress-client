@@ -734,6 +734,14 @@ Optional companion-plugin namespace with null-on-404 semantics. See [Companion P
 
 Low-level escape hatch for endpoints the built-ins don't cover. Handles retries, auth, body encoding, and cache invalidation.
 
+### `fetchCustom<T>(endpoint, params?)`
+
+Read-only helper for GET requests against custom REST namespaces. Returns `PaginatedResponse<T>` with the response payload typed as `T` (no adapter normalization, no Zod validation). See [Custom Endpoints](#13-custom-endpoints).
+
+```typescript
+async fetchCustom<T>(endpoint: string, params?: Record<string, unknown>): Promise<PaginatedResponse<T>>
+```
+
 ### `invalidate(pattern)`
 
 Invalidate cached entries by string prefix, `RegExp`, or predicate. Returns the number of keys cleared.
