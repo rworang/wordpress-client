@@ -28,10 +28,10 @@ export const toPage = (raw: RawPage): Page => {
   return {
     id: raw.id,
     slug: raw.slug,
-    title: raw.title?.rendered ?? '',
+    title: raw.title.rendered,
     author: author ? toAuthor(author) : EMPTY_AUTHOR,
-    content: raw.content?.rendered ?? '',
-    excerpt: raw.excerpt?.rendered ?? '',
+    content: raw.content.rendered,
+    excerpt: raw.excerpt.rendered,
     featuredImage: {
       id: media?.id,
       url: media?.source_url ?? '',
