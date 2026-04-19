@@ -33,7 +33,13 @@ export declare const RawPostSchema: z.ZodObject<{
                 }, z.core.$strip>>;
             }, z.core.$strip>>;
         }, z.core.$strip>>>;
-        'wp:term': z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodObject<{
+        'wp:term': z.ZodOptional<z.ZodTuple<[z.ZodArray<z.ZodObject<{
+            id: z.ZodNumber;
+            slug: z.ZodString;
+            name: z.ZodString;
+            description: z.ZodOptional<z.ZodString>;
+            count: z.ZodOptional<z.ZodNumber>;
+        }, z.core.$strip>>], z.ZodArray<z.ZodObject<{
             id: z.ZodNumber;
             slug: z.ZodString;
             name: z.ZodString;

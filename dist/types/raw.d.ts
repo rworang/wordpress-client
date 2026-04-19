@@ -86,7 +86,7 @@ export interface RawPost {
     sticky: boolean;
     _embedded?: {
         'wp:featuredmedia'?: RawFeaturedMedia[];
-        'wp:term'?: RawCategory[][];
+        'wp:term'?: [RawCategory[], ...RawTag[][]];
         author?: RawAuthor[];
     };
 }

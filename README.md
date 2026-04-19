@@ -46,6 +46,25 @@ Or add to `package.json`:
 - **TypeScript** 5.4+ (if using TypeScript)
 - **ESM only** — this package ships as ES modules. Your project must use `"type": "module"` in `package.json` or import via dynamic `import()`.
 
+### Local development setup
+
+If you're working on the library itself, the normal flow is:
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Useful extras:
+
+```bash
+pnpm coverage
+pnpm lint
+pnpm format
+```
+
 ---
 
 ## 2. Quick Start
@@ -100,6 +119,14 @@ try {
   }
 }
 ```
+
+### Typical usage flow
+
+1. Create a client with `baseURL`.
+2. Start with public reads such as `posts()`, `page()`, or `mediaList()`.
+3. Add `auth` only when you need create, update, delete, or upload operations.
+4. Use `defineResource()` for custom plugin endpoints or custom post types.
+5. Handle typed errors with `instanceof WordpressError` subclasses.
 
 ---
 
@@ -388,13 +415,13 @@ When `singleton: true` is set, the return type exposes only `get` and `update` �
 
 ### Options
 
-| Field         | Type               | Description                                                                                     |
-| ------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `path`        | `string`           | REST path without namespace prefix, e.g. `/worang/v1/reviews`                                   |
-| `base`        | `'api' \| 'site'`  | `'api'` (default) resolves under `/wp-json/wp/v2`; `'site'` resolves under `/wp-json` directly  |
-| `itemSchema`  | `z.ZodType<unknown>` | Optional Zod schema — runs `safeParse` and throws `WordpressSchemaError` on a mismatch        |
-| `invalidates` | `string[]`         | Extra cache prefixes to invalidate after writes (on top of the auto-invalidation of `path`)     |
-| `singleton`   | `boolean`          | When `true`, returns `{ get, update }` only                                                     |
+| Field         | Type                 | Description                                                                                    |
+| ------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
+| `path`        | `string`             | REST path without namespace prefix, e.g. `/worang/v1/reviews`                                  |
+| `base`        | `'api' \| 'site'`    | `'api'` (default) resolves under `/wp-json/wp/v2`; `'site'` resolves under `/wp-json` directly |
+| `itemSchema`  | `z.ZodType<unknown>` | Optional Zod schema — runs `safeParse` and throws `WordpressSchemaError` on a mismatch         |
+| `invalidates` | `string[]`           | Extra cache prefixes to invalidate after writes (on top of the auto-invalidation of `path`)    |
+| `singleton`   | `boolean`            | When `true`, returns `{ get, update }` only                                                    |
 
 ---
 
@@ -702,23 +729,23 @@ const { data: images } = await client.mediaList({
 
 The following methods write to the WordPress REST API. All of them throw `WordpressAuthError` when `auth` is not configured. See [Writing Content](#6-writing-content) for worked examples.
 
-| Method                                                                                                    | Returns                               | Notes                                                        |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
-| `createPost(payload)`                                                                                     | `Post`                                | Invalidates `/posts`                                         |
-| `updatePost(id, payload)`                                                                                 | `Post`                                | Invalidates `/posts`                                         |
-| `deletePost(id, { force? })`                                                                              | `DeleteResult<Post>`                  | `force: true` by default; `force: false` returns `{ deleted: false; trashed: T }` |
-| `createPage(payload)`                                                                                     | `Page`                                | Invalidates `/pages`                                         |
-| `updatePage(id, payload)`                                                                                 | `Page`                                | Invalidates `/pages`                                         |
-| `deletePage(id, { force? })`                                                                              | `DeleteResult<Page>`                  | `force: false` returns `{ deleted: false; trashed: T }`      |
-| `createCategory(payload)`                                                                                 | `Category`                            | Invalidates `/categories` **and** `/posts`                   |
-| `updateCategory(id, payload)`                                                                             | `Category`                            | Same invalidation                                            |
-| `deleteCategory(id, { force? })`                                                                          | `DeleteResult<Category>`              | `force: false` returns `{ deleted: false; trashed: T }`      |
-| `createTag(payload)`                                                                                      | `Tag`                                 | Invalidates `/tags` **and** `/posts`                         |
-| `updateTag(id, payload)`                                                                                  | `Tag`                                 | Same                                                         |
-| `deleteTag(id, { force? })`                                                                               | `DeleteResult<Tag>`                   | `force: false` returns `{ deleted: false; trashed: T }`      |
-| `updateMedia(id, payload)`                                                                                | `Media`                               | Metadata-only                                                |
-| `deleteMedia(id, { force? })`                                                                             | `DeleteResult<Media>`                 | Invalidates `/media`; `force: false` returns `{ deleted: false; trashed: T }` |
-| `uploadMedia(file, { filename?, altText?, caption?, title? })`                                            | `Media`                               | Two HTTP round-trips when any metadata option is supplied    |
+| Method                                                         | Returns                  | Notes                                                                             |
+| -------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `createPost(payload)`                                          | `Post`                   | Invalidates `/posts`                                                              |
+| `updatePost(id, payload)`                                      | `Post`                   | Invalidates `/posts`                                                              |
+| `deletePost(id, { force? })`                                   | `DeleteResult<Post>`     | `force: true` by default; `force: false` returns `{ deleted: false; trashed: T }` |
+| `createPage(payload)`                                          | `Page`                   | Invalidates `/pages`                                                              |
+| `updatePage(id, payload)`                                      | `Page`                   | Invalidates `/pages`                                                              |
+| `deletePage(id, { force? })`                                   | `DeleteResult<Page>`     | `force: false` returns `{ deleted: false; trashed: T }`                           |
+| `createCategory(payload)`                                      | `Category`               | Invalidates `/categories` **and** `/posts`                                        |
+| `updateCategory(id, payload)`                                  | `Category`               | Same invalidation                                                                 |
+| `deleteCategory(id, { force? })`                               | `DeleteResult<Category>` | `force: false` returns `{ deleted: false; trashed: T }`                           |
+| `createTag(payload)`                                           | `Tag`                    | Invalidates `/tags` **and** `/posts`                                              |
+| `updateTag(id, payload)`                                       | `Tag`                    | Same                                                                              |
+| `deleteTag(id, { force? })`                                    | `DeleteResult<Tag>`      | `force: false` returns `{ deleted: false; trashed: T }`                           |
+| `updateMedia(id, payload)`                                     | `Media`                  | Metadata-only                                                                     |
+| `deleteMedia(id, { force? })`                                  | `DeleteResult<Media>`    | Invalidates `/media`; `force: false` returns `{ deleted: false; trashed: T }`     |
+| `uploadMedia(file, { filename?, altText?, caption?, title? })` | `Media`                  | Two HTTP round-trips when any metadata option is supplied                         |
 
 ### `defineResource(config)`
 
@@ -878,6 +905,8 @@ Error
         ├── WordpressNotFoundError      — 404 responses
         ├── WordpressAuthError          — 401/403 responses
         ├── WordpressValidationError    — 400 responses (invalid parameters)
+        ├── WordpressConflictError      — 409 responses
+        ├── WordpressRateLimitError     — 429 responses
         └── WordpressSchemaError        — Response didn't match expected Zod schema
 ```
 
@@ -934,6 +963,26 @@ class WordpressValidationError extends WordpressError {
 }
 ```
 
+### `WordpressConflictError`
+
+Thrown for HTTP 409 responses, typically when a write collides with an existing resource state.
+
+```typescript
+class WordpressConflictError extends WordpressError {
+  // statusCode: 409
+}
+```
+
+### `WordpressRateLimitError`
+
+Thrown for HTTP 429 responses when the host asks the client to slow down.
+
+```typescript
+class WordpressRateLimitError extends WordpressError {
+  // statusCode: 429
+}
+```
+
 ### `WordpressSchemaError`
 
 Thrown when an API response passes HTTP validation but fails Zod schema validation — meaning the response shape is unexpected.
@@ -953,6 +1002,8 @@ import {
   WordpressError,
   WordpressNotFoundError,
   WordpressAuthError,
+  WordpressConflictError,
+  WordpressRateLimitError,
   WordpressSchemaError,
 } from '@worang/wordpress-client'
 
@@ -963,6 +1014,10 @@ try {
     // Post doesn't exist — show 404 page
   } else if (err instanceof WordpressAuthError) {
     // Not authorized — the post may be private
+  } else if (err instanceof WordpressConflictError) {
+    // Write conflict — refresh or reconcile state
+  } else if (err instanceof WordpressRateLimitError) {
+    // Back off and retry later
   } else if (err instanceof WordpressSchemaError) {
     // API returned an unexpected shape — log for debugging
     console.error(err.issues)
@@ -1091,6 +1146,14 @@ Matches the WP REST default. For complete enumeration, pair with `fetchAll((page
 
 ## 15. Version Notes
 
+### 0.3.0 — Hardening and release prep
+
+- Stronger HTTP error mapping, including dedicated conflict and rate-limit error classes
+- Companion plugin packaging and validation flow for WordPress-side integration
+- Improved CI coverage with PHP linting for the companion plugin
+- More predictable custom-resource behavior for slug misses
+- WordPress-compatible serialization for array-based query filters
+
 ### 0.2.0 — Authoring
 
 - Application Password auth via `auth: { username, appPassword }` or `auth: { getAuthHeader }`
@@ -1216,19 +1279,10 @@ import type {
 } from '@worang/wordpress-client'
 
 // Write payloads
-import type {
-  PostWritePayload,
-  PageWritePayload,
-  TermWritePayload,
-  MediaWritePayload,
-} from '@worang/wordpress-client'
+import type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from '@worang/wordpress-client'
 
 // Custom resources
-import type {
-  DefineResourceConfig,
-  ResourceMethods,
-  SingletonResourceMethods,
-} from '@worang/wordpress-client'
+import type { DefineResourceConfig, ResourceMethods, SingletonResourceMethods } from '@worang/wordpress-client'
 
 // Companion plugin
 import type { CompanionNamespace, CompanionVersion } from '@worang/wordpress-client'
