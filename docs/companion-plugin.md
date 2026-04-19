@@ -1,7 +1,7 @@
 # Companion Plugin Contract
 
 > **Spec version:** 1.0 · **SDK version:** `@worang/wordpress-client` ≥ 0.2.0
-> **Status:** draft — PHP reference implementation lands in Sprint 4.
+> **Status:** v1.0 — PHP reference implementation available in-repo.
 
 ## Purpose
 
@@ -23,6 +23,13 @@ without branching on error types.
 - Plugin ships as a single PHP file; admins install via the WordPress plugin
   UI or WP-CLI. A Composer/WPackagist distribution is not in scope for
   v1.0 of this spec.
+
+## Installation
+
+- Download `worang-client-companion.zip` from the GitHub release, or build it locally with `companion-plugin/build-zip.sh`.
+- Upload it in WordPress admin via **Plugins → Add New → Upload Plugin**.
+- Alternatively, extract it manually to `wp-content/plugins/worang-client-companion/`.
+- Activate the plugin in the WordPress plugin admin.
 
 ## REST endpoints
 
@@ -105,7 +112,7 @@ treat that as "the server is broken", not "the plugin is missing".
 
 ## Sample PHP stub
 
-Drop into `wp-content/plugins/worang-client-companion/worang-client.php`:
+The full production source now lives at `companion-plugin/worang-client-companion.php` in this repository. The snippet below remains as a reference:
 
 ```php
 <?php
