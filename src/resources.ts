@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import type { WordpressClient, RequestOptions } from './client'
 import type { PaginatedResponse } from './utils/pagination'
+import type { DeleteResult } from './types/payloads'
 import { extractPagination } from './utils/pagination'
 import { WordpressSchemaError } from './errors'
 
@@ -36,7 +37,7 @@ export interface ResourceMethods<Item, Payload> {
   get(idOrSlug: number | string, options?: RequestOptions): Promise<Item>
   create(payload: Payload, options?: RequestOptions): Promise<Item>
   update(id: number, payload: Partial<Payload>, options?: RequestOptions): Promise<Item>
-  delete(id: number, options?: { force?: boolean } & RequestOptions): Promise<{ deleted: true; previous: Item }>
+  delete(id: number, options?: { force?: boolean } & RequestOptions): Promise<DeleteResult<Item>>
 }
 
 export interface SingletonResourceMethods<Item, Payload> {
@@ -168,7 +169,7 @@ export function createResource<Item, Payload>(
     },
     async delete(id, options) {
       const force = options?.force ?? true
-      const response = await client.request<{ deleted?: boolean; previous?: unknown }>({
+      const response = await client.request<{ deleted?: boolean; previous?: unknown } | unknown>({
         method: 'DELETE',
         path: `${path}/${id}`,
         params: { force: force ? 'true' : 'false' },
@@ -177,15 +178,18 @@ export function createResource<Item, Payload>(
         signal: options?.signal,
       })
       applyExtraInvalidations(client, invalidates, path)
-      if (!response.data.previous) {
-        throw new WordpressSchemaError(label, [
-          { path: ['previous'], message: 'Delete response did not include the previous item' },
-        ])
+
+      if (force) {
+        const body = response.data as { deleted?: boolean; previous?: unknown }
+        if (!body.previous) {
+          throw new WordpressSchemaError(label, [
+            { path: ['previous'], message: 'Delete response did not include the previous item' },
+          ])
+        }
+        return { deleted: true, previous: validateItem<Item>(itemSchema, body.previous, label) }
       }
-      return {
-        deleted: true,
-        previous: validateItem<Item>(itemSchema, response.data.previous, label),
-      }
+
+      return { deleted: false, trashed: validateItem<Item>(itemSchema, response.data, label) }
     },
   }
   return methods

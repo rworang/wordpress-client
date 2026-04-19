@@ -83,6 +83,7 @@ describe('defineResource', () => {
 
       const deleted = await widgets.delete(2)
       expect(deleted.deleted).toBe(true)
+      if (!deleted.deleted) throw new Error('expected hard delete')
       expect(deleted.previous.name).toBe('Renamed')
     })
 
