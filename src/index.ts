@@ -28,6 +28,7 @@ export type {
   UsersQueryParams,
 } from './types/params'
 export type { PostWritePayload, PageWritePayload, TermWritePayload, MediaWritePayload } from './types/payloads'
+export type { DefineResourceConfig, ResourceMethods, SingletonResourceMethods } from './resources'
 
 export type { PaginatedResponse } from './utils/pagination'
 export { fetchAll } from './utils/pagination'
